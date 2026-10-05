@@ -115,7 +115,8 @@ window.NiuRecorder = (() => {
       const started = performance.now();
       recorder.ondataavailable = (event) => { if (event.data && event.data.size) chunks.push(event.data); };
       recorder.onstop = () => {
-        const seconds = Math.round((performance.now() - started) / 1000);
+        // A take that ran to the limit is reported as the limit, not a moment over it.
+        const seconds = Math.min(max, Math.round((performance.now() - started) / 1000));
         const blob = new Blob(chunks, { type: (recorder.mimeType || type || 'audio/webm').split(';')[0] });
         recorder = null;
         release();
