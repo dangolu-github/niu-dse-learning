@@ -1,7 +1,8 @@
-// Vocabulary: word lists from the teacher, the learner's own words, and export for a flashcard app.
+// Vocabulary: the teacher's word lists, each a toggle, with export for a flashcard app. Learners cannot add words
+// (teacher's decision, 2026-10-05); words a learner added before that still show in their own list until removed.
 (() => {
   const N = window.Niu, A = N.A, app = document.getElementById('app');
-  const S = { lists: [], myListId: '', query: '' };
+  const S = { lists: [], myListId: '', query: '', open: new Set() };
 
   const matches = (w) => !S.query || [w.word, w.meaning, w.example].join(' ').toLowerCase().indexOf(S.query) >= 0;
   const wordRow = (w) => `<li class="nd-word${w.known ? ' is-known' : ''}">
@@ -11,39 +12,31 @@
 
   function listsHtml() {
     return S.lists.map((l) => {
+      if (l.id === S.myListId && !l.words.length) return '';
       const words = l.words.filter(matches);
       if (S.query && !words.length) return '';
-      const empty = l.id === S.myListId ? 'Add words you meet in practice with the form above. 做题时遇到的生词可以加在这里。' : 'No words yet.';
-      return `<section class="nd-section" data-list="${N.esc(l.id)}"><h2>${N.esc(l.title)} <small>${l.words.length} word${l.words.length === 1 ? '' : 's'}</small></h2>
+      const open = S.query || S.open.has(l.id) ? ' open' : '';
+      return `<details class="nd-fold nd-vocab-list" data-list="${N.esc(l.id)}"${open}><summary><small>${l.words.length} word${l.words.length === 1 ? '' : 's'}</small>${N.esc(l.title)}</summary><div class="nd-fold-body">
         ${l.note ? `<p class="nd-note">${N.esc(l.note)}</p>` : ''}
         ${l.words.length ? `<div class="nd-actions"><button class="nd-btn quiet" type="button" data-copy="${N.esc(l.id)}">Copy the words<small>复制单词（可粘贴到扇贝词书）</small></button><button class="nd-btn quiet" type="button" data-download="${N.esc(l.id)}">Download .txt<small>下载词表</small></button></div><p class="nd-msg" data-copymsg="${N.esc(l.id)}" role="status"></p>` : ''}
-        ${words.length ? `<ul class="nd-words">${words.map(wordRow).join('')}</ul>` : `<p class="nd-empty">${empty}</p>`}</section>`;
-    }).join('');
+        ${words.length ? `<ul class="nd-words">${words.map(wordRow).join('')}</ul>` : '<p class="nd-empty">No words yet.</p>'}</div></details>`;
+    }).join('') || '<p class="nd-empty">No words match. 没有找到。</p>';
   }
 
   function render() {
     app.innerHTML = `
       <p class="nd-kicker">Niu · DSE English</p>
       <h1>Vocabulary</h1>
-      <p class="nd-lead">老师发布的词表和你自己加的生词。背单词要连例句一起背；词表可以复制到背单词软件里。</p>
-      <section class="nd-section"><h2>Add a word <small>添加生词</small></h2>
-        <form class="nd-form" data-add>
-          <label class="nd-field">Word or phrase 单词或短语<input name="word" maxlength="80" required autocomplete="off" autocapitalize="off"></label>
-          <label class="nd-field">Meaning 意思<input name="meaning" maxlength="200" autocomplete="off"></label>
-          <label class="nd-field wide">Example sentence 例句<input name="example" maxlength="400" autocomplete="off"></label>
-          <label class="nd-field">Where I met it 出处<input name="from" maxlength="120" autocomplete="off" placeholder="e.g. 2019 Listening Task 2"></label>
-          <div class="nd-actions"><button class="nd-btn" type="submit">Add<small>添加</small></button></div>
-          <p class="nd-msg wide" data-addmsg role="status"></p>
-        </form></section>
-      <p style="margin:26px 0 0"><input class="nd-search" type="search" placeholder="Search words 搜索" value="${N.esc(S.query)}" data-search aria-label="Search words"></p>
+      <p class="nd-lead">老师发布的词表。点开标题看单词；背单词要连例句一起背，词表可以复制到背单词软件里。</p>
+      <p style="margin:20px 0 14px"><input class="nd-search" type="search" placeholder="Search words 搜索" value="${N.esc(S.query)}" data-search aria-label="Search words"></p>
       <div data-lists>${listsHtml()}</div>`;
   }
 
-  async function refresh(keepForm) {
+  async function refresh(keepPage) {
     const data = await A.request('getVocabulary', {});
     N.previewNote(data.env);
     S.lists = data.lists; S.myListId = data.myListId;
-    if (keepForm && app.querySelector('[data-lists]')) app.querySelector('[data-lists]').innerHTML = listsHtml();
+    if (keepPage && app.querySelector('[data-lists]')) app.querySelector('[data-lists]').innerHTML = listsHtml();
     else render();
   }
 
@@ -54,25 +47,12 @@
     S.query = event.target.value.trim().toLowerCase();
     app.querySelector('[data-lists]').innerHTML = listsHtml();
   });
-  app.addEventListener('submit', async (event) => {
-    const form = event.target.closest('[data-add]');
-    if (!form) return;
-    event.preventDefault();
-    const message = form.querySelector('[data-addmsg]'), button = form.querySelector('button');
-    const values = Object.fromEntries(new FormData(form).entries());
-    button.disabled = true;
-    message.textContent = 'Adding… 正在添加'; message.className = 'nd-msg wide';
-    try {
-      const result = await A.post('addWord', values);
-      message.textContent = result.duplicate ? 'This word is already in your list. 这个词已经在你的生词表里。' : 'Added. 已添加。';
-      message.className = 'nd-msg wide' + (result.duplicate ? '' : ' success');
-      if (!result.duplicate) form.reset();
-      await refresh(true);
-    } catch (error) {
-      message.textContent = (error && error.message) || 'The word could not be added.'; message.className = 'nd-msg wide error';
-    }
-    button.disabled = false;
-  });
+  // Remember which lists are open, so marking a word as known (which re-renders) keeps them open.
+  app.addEventListener('toggle', (event) => {
+    const list = event.target.closest && event.target.closest('details[data-list]');
+    if (!list || S.query) return;
+    if (list.open) S.open.add(list.dataset.list); else S.open.delete(list.dataset.list);
+  }, true);
   app.addEventListener('change', async (event) => {
     const box = event.target.closest('[data-known]');
     if (!box) return;

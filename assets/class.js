@@ -20,9 +20,9 @@
       // Class words: the new words this class stressed. One column of headwords can be copied for 扇贝.
       const lists = c.words || [];
       const allWords = lists.flatMap((l) => l.words.map((w) => w.word));
-      const wordTable = (l) => `<div class="nd-block"><h3 class="nd-sub">${N.esc(l.title)} <small>${l.words.length} words</small></h3>${l.note ? `<p class="nd-note">${N.esc(l.note)}</p>` : ''}
+      const wordTable = (l) => `<details class="nd-fold" data-wordlist="${N.esc(l.id)}"><summary><small>${l.words.length} words</small>${N.esc(l.title)}</summary><div class="nd-fold-body">${l.note ? `<p class="nd-note">${N.esc(l.note)}</p>` : ''}
         <table class="nd-wordtable"><thead><tr><th>Word 单词</th><th>Meaning 意思</th><th>Example 例句</th></tr></thead><tbody>${l.words.map((w) => `<tr><td><strong>${N.esc(w.word)}</strong> <small>${N.esc(w.pos)}</small></td><td>${N.esc(w.meaning)}</td><td class="ex">${N.esc(w.example)}</td></tr>`).join('')}</tbody></table>
-        <div class="nd-actions"><button class="nd-btn quiet" type="button" data-copy-words="${N.esc(l.id)}">Copy the word column<small>复制单词列（每行一个，可直接粘贴到扇贝）</small></button></div></div>`;
+        <div class="nd-actions"><button class="nd-btn quiet" type="button" data-copy-words="${N.esc(l.id)}">Copy the word column<small>复制单词列（每行一个，可直接粘贴到扇贝）</small></button></div></div></details>`;
       const classWords = lists.length
         ? `${lists.length > 1 ? `<div class="nd-actions"><button class="nd-btn" type="button" data-copy-words="*">Copy all ${allWords.length} words<small>复制本课全部单词</small></button></div>` : ''}${lists.map(wordTable).join('')}<p class="nd-msg" id="copy-msg"></p>`
         : '<p class="nd-empty">No word list for this class yet. 本课单词稍后发布。</p>';
