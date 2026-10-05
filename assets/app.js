@@ -47,7 +47,7 @@ window.Niu = (() => {
   };
   function taskCard(card) {
     const state = stateText[card.state] || stateText.new;
-    const facts = [card.paperLabel];
+    const facts = [card.paperLabel + (card.part ? ' · Part ' + card.part : '')];
     if (card.count) facts.push(card.count + (card.count === 1 ? ' answer' : ' answers'));
     if (card.minutes) facts.push(card.minutes + ' min');
     if (card.hasAudio) facts.push('listening');

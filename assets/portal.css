@@ -30,6 +30,14 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .nd-section > h2 { margin: 0 0 14px; font-size: 22px; }
 .nd-section > h2 small { color: var(--muted); font-size: 14px; font-weight: 600; margin-left: 6px; }
 .nd-sub { margin: 22px 0 10px; font-size: 16px; color: var(--muted); }
+.nd-paper { margin: 14px 0; border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px 10px; background: var(--surface); }
+.nd-paper > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; list-style: none; }
+.nd-paper > summary::-webkit-details-marker { display: none; }
+.nd-paper > summary .nd-sub { margin: 10px 0; color: var(--ink); }
+.nd-paper > summary::after { content: '▸'; color: var(--muted); }
+.nd-paper[open] > summary::after { content: '▾'; }
+.nd-paper-count { min-width: 26px; padding: 1px 8px; border-radius: 999px; background: var(--line); color: var(--muted); font-size: 12px; text-align: center; }
+.nd-part { margin: 14px 0 8px; font-size: 14px; color: var(--muted); letter-spacing: .02em; }
 .nd-empty { margin: 0; padding: 16px 18px; border: 1px dashed var(--line); border-radius: 12px; background: var(--surface); color: var(--muted); }
 .nd-note { color: var(--muted); font-size: 14px; }
 .nd-loading { color: var(--muted); }
