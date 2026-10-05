@@ -25,7 +25,11 @@
       const sets = (data.mockSets || []).map((m) => [m, mock.filter((t) => t.mockSet === m.id).sort((a, b) => order(a) - order(b))])
         .concat([[{ id: '', label: 'Other mocks · 其他模考', note: '' }, mock.filter((t) => !(data.mockSets || []).some((m) => m.id === t.mockSet))]])
         .filter(([, l]) => l.length);
-      const mocks = sets.map(([m, l]) => `<details class="nd-paper"><summary><h3 class="nd-sub">${N.esc(m.label)}</h3><span class="nd-paper-count">${l.length}</span></summary>${m.note ? `<p class="nd-note">${N.esc(m.note)}</p>` : ''}${cards(l)}</details>`).join('');
+      // One set at a time: the next set opens by itself when the one before is finished.
+      const state = (m) => m.status === 'finished' ? `<p class="nd-note">Finished 已完成 ✓</p>`
+        : m.status === 'open' ? `<p class="nd-note">${m.done} / ${m.total} done 已完成 (Part B1 or B2: do one 二选一)</p>`
+        : m.status === 'locked' ? `<p class="nd-note">${m.after ? `Opens when you finish ${N.esc(m.after)}. 完成上一套后自动解锁。` : 'Not open yet. 暂未开放。'}</p>` : '';
+      const mocks = sets.map(([m, l]) => `<details class="nd-paper"${m.status === 'open' ? ' open' : ''}><summary><h3 class="nd-sub">${N.esc(m.label)}${m.status === 'locked' ? ' 🔒' : m.status === 'finished' ? ' ✓' : ''}</h3><span class="nd-paper-count">${l.length}</span></summary>${state(m)}${m.note ? `<p class="nd-note">${N.esc(m.note)}</p>` : ''}${cards(l)}</details>`).join('');
       app.innerHTML = `
         <p class="nd-kicker">Niu · DSE English</p>
         <h1>Practice &amp; Mock</h1>

@@ -5,7 +5,7 @@
   const N = window.Niu, A = N.A, app = document.getElementById('app');
   const taskId = new URLSearchParams(location.search).get('id') || '';
   const S = { task: null, control: null, env: '', responses: {}, files: {}, submission: null, saveId: '', submissionId: '', clientUpdatedAt: '', secondsUsed: 0,
-    audioDone: {}, dirty: false, saving: false, blocked: '', uploads: 0, timer: null, retryDelay: 4000, recorders: [], locked: false };
+    audioDone: {}, dirty: false, saving: false, syncedSeconds: -1, blocked: '', uploads: 0, timer: null, retryDelay: 4000, recorders: [] };
   const storeKey = () => `niu-dse-task:${S.env}:${taskId}:v${S.control.resetVersion}`;
   const items = () => S.task.blocks.filter((b) => b.type === 'q');
   const hasAnswer = (v) => v != null && (typeof v === 'string' ? v.trim() !== '' : Boolean(v.file) || Boolean(v.files && v.files.length));
@@ -15,7 +15,7 @@
     return items().filter((q) => !grouped[q.id] && !q.optional).map((q) => [q.id]).concat(S.task.requireAny || []);
   };
   const answered = () => units().filter((u) => u.some((id) => hasAnswer(S.responses[id]))).length;
-  const readOnly = () => Boolean(S.submission) || Boolean(S.blocked) || S.locked;
+  const readOnly = () => Boolean(S.submission) || Boolean(S.blocked);
 
   function readLocal() {
     try { return JSON.parse(localStorage.getItem(storeKey()) || 'null'); } catch (error) { return null; }
@@ -29,7 +29,7 @@
   async function load() {
     const data = await A.request('getTask', { taskId });
     S.task = data.task; S.control = data.control; S.env = data.env; S.submission = data.submission; S.files = data.files || {};
-    S.blocked = ''; S.locked = false;
+    S.blocked = '';
     N.previewNote(S.env);
     document.title = S.task.label + ' · Niu · DSE English';
     const local = readLocal() || {};
@@ -136,7 +136,6 @@
       if (S.submission.transcriptHtml) html += `<details class="nd-fold"><summary><small>Transcript</small>Recording transcript 录音稿</summary><div class="nd-fold-body nd-rich">${S.submission.transcriptHtml}</div></details>`;
       top.innerHTML = html;
     } else if (S.blocked) top.innerHTML = `<p class="nd-banner warn">${N.esc(S.blocked)}</p>`;
-    else if (S.locked) top.innerHTML = '<p class="nd-banner warn">Time is up. Submit your answers now. 时间到，请提交。</p>';
     else top.innerHTML = '';
   }
 
@@ -170,12 +169,9 @@
     const t = S.task;
     const timeEl = app.querySelector('[data-time]');
     if (!timeEl) return;
-    if (t.strictTime && t.minutes && !S.submission) {
-      const left = Math.max(0, t.minutes * 60 - S.secondsUsed);
-      timeEl.innerHTML = `Time left 剩余 <b>${N.clock(left)}</b>`;
-    } else {
-      timeEl.innerHTML = `Time 用时 <b>${N.clock(S.secondsUsed)}</b>${t.minutes ? ` · suggested 建议 ${t.minutes} min` : ''}`;
-    }
+    // Time is counted and kept, never enforced: no task locks when the time is up.
+    const guide = t.minutes ? (t.strictTime ? ` · exam time 考试时间 ${t.minutes} min` : ` · suggested 建议 ${t.minutes} min`) : '';
+    timeEl.innerHTML = `Time 用时 <b>${N.clock(S.secondsUsed)}</b>${guide}`;
     app.querySelector('[data-progress]').innerHTML = `<b>${answered()}</b> / ${units().length} answered`;
   }
 
@@ -188,13 +184,8 @@
     if (!S.task || readOnly() || document.hidden) return;
     S.secondsUsed += 1;
     if (S.secondsUsed % 15 === 0) writeLocal();
-    if (S.task.strictTime && S.task.minutes && S.secondsUsed >= S.task.minutes * 60) {
-      S.locked = true;
-      S.recorders.forEach((r) => r.stop());
-      writeLocal();
-      render();
-      return;
-    }
+    // Once a minute the time used is saved with the draft, so the work can be continued anywhere.
+    if (S.secondsUsed % 60 === 0 && S.secondsUsed !== S.syncedSeconds && !S.submission && !S.blocked) { S.dirty = true; schedule(500); }
     updateBar();
   }, 1000);
 
@@ -214,11 +205,24 @@
     S.timer = setTimeout(sync, delay);
   }
 
+  // Leaving the page (closing it, switching app, locking the phone): send what is not yet saved.
+  function flush() {
+    if (!S.task || S.submission || S.blocked || !S.saveId) return;
+    if (!S.dirty && S.secondsUsed === S.syncedSeconds) return;
+    writeLocal();
+    A.fire('saveDraft', { taskId, saveId: S.saveId, responses: S.responses, clientUpdatedAt: S.clientUpdatedAt, secondsUsed: S.secondsUsed });
+    S.syncedSeconds = S.secondsUsed;
+  }
+  window.addEventListener('pagehide', flush);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+
   async function sync() {
     if (S.saving || !S.dirty || S.submission || S.blocked) return;
     S.saving = true; S.dirty = false;
     try {
-      await A.post('saveDraft', { taskId, saveId: S.saveId, responses: S.responses, clientUpdatedAt: S.clientUpdatedAt, secondsUsed: S.secondsUsed });
+      const seconds = S.secondsUsed;
+      await A.post('saveDraft', { taskId, saveId: S.saveId, responses: S.responses, clientUpdatedAt: S.clientUpdatedAt, secondsUsed: seconds });
+      S.syncedSeconds = seconds;
       S.retryDelay = 4000;
       if (!S.dirty) setStatus('Saved 已保存 · ' + new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }));
     } catch (error) {
