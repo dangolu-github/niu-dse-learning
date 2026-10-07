@@ -9,7 +9,7 @@
       const c = data.class;
       document.title = `Class ${c.number} · ${c.title}`;
       const handouts = c.resources.length
-        ? c.resources.map((r, i) => `<details class="nd-fold"${i === 0 ? ' open' : ''}><summary><small>${N.esc(r.kind)}</small>${N.esc(r.label)}</summary><div class="nd-fold-body nd-rich">${r.html}</div></details>`).join('')
+        ? c.resources.map((r, i) => `<details class="nd-fold"${i === 0 ? ' open' : ''}><summary><small>${N.esc(r.kind)}</small>${N.esc(r.label)}</summary><div class="nd-fold-body nd-rich">${r.html}<p><button class="nd-btn" data-paper-edit="${N.esc(r.id)}">Edit annotations</button></p></div></details>`).join('')
         : '<p class="nd-empty">No handout for this class.</p>';
       const summary = c.summaryHtml
         ? `${c.summaryHidden ? '<p class="nd-banner warn">Hidden from the learner until Summary visible is turned on.</p>' : ''}<div class="nd-block nd-rich">${c.summaryHtml}</div>`
@@ -73,6 +73,7 @@
         setKnown(l.words.filter((w) => w.id === tick.dataset.known), tick.checked);
       });
       app.addEventListener('click', async (event) => {
+        const paper=event.target.closest('[data-paper-edit]');if(paper){paper.disabled=true;try{const out=await N.A.post('createPaperAnnotationLink',{resourceId:paper.dataset.paperEdit});location.assign(out.url);}catch(error){paper.disabled=false;paper.textContent='Try again · '+error.message;}return;}
         const all = event.target.closest('[data-checkall]'), none = event.target.closest('[data-uncheckall]');
         if (all || none) {
           const l = listById(all ? all.dataset.checkall : none.dataset.uncheckall);
