@@ -75,12 +75,12 @@
         const attempt = app.querySelector(`[data-attempt="${id}"]`).value.trim();
         if (!attempt) { say(id, 'Write your new answer first. 先写出你的新答案。', 'error'); button.disabled = false; return; }
         say(id, 'Checking… 正在检查');
-        const result = await A.post('redoMistake', { mistakeId: id, attempt });
+        const result = await A.post('redoMistake', { mistakeId: id, attempt, submissionOrigin: await N.origin() });
         if (result.outcome === 'self-check') S.open[id] = true;
         await refresh();
         if (result.outcome === 'incorrect') say(id, 'Not yet. Look at the question again and try once more. 还不对，再看一遍题目。', 'error');
       } else {
-        await A.post('redoMistake', { mistakeId: id, selfMark: self.dataset.self });
+        await A.post('redoMistake', { mistakeId: id, selfMark: self.dataset.self, submissionOrigin: await N.origin() });
         if (self.dataset.self === 'no') delete S.open[id];
         await refresh();
       }
@@ -90,5 +90,5 @@
     }
   });
 
-  A.ready.then(refresh).catch((error) => N.fail(app, error));
+  A.ready.then(() => { N.warmOrigin(); return refresh(); }).catch((error) => N.fail(app, error));
 })();

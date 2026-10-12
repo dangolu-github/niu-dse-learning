@@ -263,7 +263,8 @@
     await waitForSave();
     if (!S.submissionId) { S.submissionId = N.newId('sub'); writeLocal(); }
     try {
-      await A.post('submitTask', { taskId, saveId: S.saveId, submissionId: S.submissionId, resetVersion: S.control.resetVersion, responses: S.responses, secondsUsed: S.secondsUsed });
+      const submissionOrigin = await N.origin();
+      await A.post('submitTask', { taskId, saveId: S.saveId, submissionId: S.submissionId, resetVersion: S.control.resetVersion, responses: S.responses, secondsUsed: S.secondsUsed, submissionOrigin });
       A.fire('assessSubmission', { taskId, submissionId: S.submissionId });
       S.dirty = false;
       await load();
@@ -323,7 +324,8 @@
     const fileId = N.newId('file');
     S.uploads += 1;
     try {
-      const result = await A.post('uploadFile', { taskId, itemId, fileId, type, name, kind, seconds: seconds || 0, data: await N.toBase64(blob) });
+      const data = await N.toBase64(blob), submissionOrigin = await N.origin();
+      const result = await A.post('uploadFile', { taskId, itemId, fileId, type, name, kind, seconds: seconds || 0, data, submissionOrigin });
       const meta = { name: result.name || name, mime: type, bytes: result.bytes || blob.size, seconds: seconds || 0, kind };
       S.files[fileId] = meta;
       return { fileId, meta };
@@ -473,5 +475,5 @@
     });
   }
 
-  A.ready.then(load).catch((error) => N.fail(app, error));
+  A.ready.then(() => { N.warmOrigin(); return load(); }).catch((error) => N.fail(app, error));
 })();

@@ -99,10 +99,16 @@ window.Niu = (() => {
     reader.readAsDataURL(blob);
   });
 
+  // Where and on which device work is handed in (assets/submission-origin.js), sent with each submission,
+  // upload and retry for the teacher only. Nothing of it is shown on these pages; a slow or failed lookup
+  // never stops the hand-in.
+  const origin = () => (window.PortalSubmissionOrigin ? window.PortalSubmissionOrigin.collect().catch(() => null) : Promise.resolve(null));
+  const warmOrigin = () => { if (window.PortalSubmissionOrigin) window.PortalSubmissionOrigin.warm(); };
+
   function fail(container, error) {
     container.innerHTML = `<p class="nd-empty" role="alert">${esc((error && error.message) || 'This page could not be loaded. Please try again.')}</p>`;
   }
 
   header();
-  return { A, root, esc, sleep, newId, when, longDate, clock, size, words, taskHref, taskCard, loadMedia, toBase64, fail, previewNote };
+  return { A, root, esc, sleep, newId, when, longDate, clock, size, words, taskHref, taskCard, loadMedia, toBase64, fail, previewNote, origin, warmOrigin };
 })();
