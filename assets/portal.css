@@ -177,6 +177,7 @@ fieldset.nd-q { min-width: 0; }
 .nd-verdict.correct { background: var(--good-soft); }
 .nd-verdict.wrong, .nd-verdict.blank { background: var(--bad-soft); }
 .nd-verdict.partial { background: var(--warn-soft); }
+.nd-verdict.evaluated { background: #eef3fb; border-left: 4px solid var(--accent); }
 .nd-verdict p { margin: 4px 0; }
 .nd-verdict .label { font-weight: 800; }
 .nd-result { margin: 0 0 18px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }

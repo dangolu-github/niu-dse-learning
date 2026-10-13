@@ -148,7 +148,7 @@
   function showFeedback() {
     const r = S.submission.result || {};
     if (!r.released) return;
-    const labels = { correct: '✓ Correct 正确', wrong: '✗ Not correct 不正确', partial: '◐ Partly correct 部分正确', blank: '✗ Not answered 未作答', pending: 'Waiting for your teacher 等待批改', skipped: '' };
+    const labels = { correct: '✓ Correct 正确', evaluated: '◎ Evaluated 已批改', wrong: '✗ Not correct 不正确', partial: '◐ Partly correct 部分正确', blank: '✗ Not answered 未作答', pending: 'Waiting for your teacher 等待批改', skipped: '' };
     (r.items || []).forEach((i) => {
       const box = app.querySelector(`[data-q="${i.id}"]`);
       if (!box || !labels[i.verdict]) return;
