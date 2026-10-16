@@ -86,11 +86,12 @@
   }
 
   function blockHtml(b, index) {
-    if (b.type === 'html') return `<div class="nd-block nd-rich">${b.html}</div>`;
+    if (b.type === 'html' && b.title) return `<details class="nd-block nd-doc"${b.open ? ' open' : ''}><summary>${N.esc(b.title)}</summary><div class="nd-rich nd-doc-body">${b.html}</div></details>`;
+    if (b.type === 'html') return `<div class="nd-block ${b.sheet ? 'nd-sheet ' : ''}nd-rich">${b.html}</div>`;
     if (b.type === 'audio' && b.missing) return `<div class="nd-block nd-audio"><div class="nd-audio-head">🎧 <span>${N.esc(b.label || 'Recording')}</span></div><p class="nd-note">Your teacher will add this recording soon. 录音稍后由老师添加。</p></div>`;
     if (b.type === 'pages' && b.missing) return `<div class="nd-block nd-audio"><p class="nd-note">${N.esc(b.label || 'Question page')}: your teacher will add this page soon. 题页稍后由老师添加。</p></div>`;
     if (b.type === 'audio') return `<div class="nd-block nd-audio" data-audio="${N.esc(b.media)}" data-once="${b.playOnce ? 1 : 0}"><div class="nd-audio-head">🎧 <span>${N.esc(b.label || 'Recording')}</span>${b.playOnce ? '<span class="nd-pill warn">Plays once 只播放一次</span>' : ''}</div><div data-audio-body></div><p class="nd-msg" role="status"></p></div>`;
-    if (b.type === 'pages') return `<details class="nd-block nd-pages" data-pages="${N.esc(b.media.join(','))}"${index === 0 ? ' open' : ''}><summary>${N.esc(b.label || 'Question page')}</summary><div class="nd-pages-body"><p class="nd-note">Loading… 正在加载</p></div></details>`;
+    if (b.type === 'pages') return `<details class="nd-block nd-pages${b.figure ? ' nd-figure' : ''}" data-pages="${N.esc(b.media.join(','))}"${index === 0 || b.open ? ' open' : ''}><summary>${N.esc(b.label || 'Question page')}</summary><div class="nd-pages-body"><p class="nd-note">Loading… 正在加载</p></div></details>`;
     if (b.type === 'q') return questionHtml(b);
     return '';
   }
