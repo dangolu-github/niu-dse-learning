@@ -258,3 +258,11 @@ fieldset.nd-q { min-width: 0; }
 .nd-rich table { border-collapse: collapse; width: 100%; margin: 8px 0; }
 .nd-rich th, .nd-rich td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
 .nd-figure .nd-pages-body img { max-width: 620px; }
+/* Reading passages keep the paper's printed lines: one <li> per printed line, data-n where a number is printed */
+.nd-lines { list-style: none; margin: 8px 0 12px; padding: 0 0 0 3.2em; }
+.nd-lines li { position: relative; line-height: 1.75; }
+.nd-lines li.nd-pstart { margin-top: 0.7em; }
+.nd-lines li[data-n]::before { content: attr(data-n); position: absolute; left: -3.2em; width: 2.4em; text-align: right; color: var(--muted); font-size: 0.85em; font-variant-numeric: tabular-nums; }
+.nd-doc-body .nd-src { color: var(--muted); font-size: 13px; }
+.nd-rich figure { margin: 10px 0; }
+@media (max-width: 600px) { .nd-lines { padding-left: 2.4em; } .nd-lines li[data-n]::before { left: -2.4em; width: 1.8em; } }
