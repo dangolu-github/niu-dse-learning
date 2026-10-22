@@ -22,7 +22,7 @@ window.Niu = (() => {
   // Words as a word processor counts them: "6:40", "p.m." and "dog-friendly" are one word each.
   const words = (text) => String(text || '').split(/\s+/).filter((w) => /[A-Za-z0-9\u00C0-\u024F]/.test(w)).length;
 
-  const pages = [['home', '', 'Classes', '课程记录'], ['practice', 'practice/', 'Practice & Mock', '练习与模考'], ['mistakes', 'mistake-log/', 'Mistake Log', '错题本'], ['vocabulary', 'vocabulary/', 'Vocabulary', '词汇']];
+  const pages = [['home', '', 'Classes', '课程记录'], ['practice', 'practice/', 'Practice & Mock', '练习与模考'], ['extra', 'extra-practice/', 'Extra Practice', '拓展练习'], ['mistakes', 'mistake-log/', 'Mistake Log', '错题本'], ['vocabulary', 'vocabulary/', 'Vocabulary', '词汇']];
   function header() {
     const active = document.body.dataset.page || '';
     const top = document.createElement('header');

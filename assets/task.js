@@ -120,14 +120,34 @@
     });
     const back = t.classId ? `<a href="${N.root}class/?id=${encodeURIComponent(t.classId)}">← Class</a> · ` : '';
     app.innerHTML = `
-      <p class="nd-back">${back}<a href="${N.root}practice/">← Practice &amp; Mock</a></p>
-      <p class="nd-kicker">${N.esc(t.paperLabel)}${t.source ? ' · ' + N.esc(t.source) : ''}</p>
+      <p class="nd-back">${back}${t.group === 'extra' ? `<a href="${N.root}extra-practice/">← Extra Practice</a>` : `<a href="${N.root}practice/">← Practice &amp; Mock</a>`}</p>
+      <p class="nd-kicker">${N.esc(t.group === 'extra' ? 'Extra Practice · Listening' : t.paperLabel)}${t.source ? ' · ' + N.esc(t.source) : ''}</p>
       <h1>${N.esc(t.label)}</h1>
       <div class="nd-taskbar"><span data-time></span><span data-progress></span><span class="grow"></span><span data-status role="status"></span><button class="nd-linkbtn" type="button" data-print="blank">Print questions / PDF</button>${S.submission ? '<button class="nd-linkbtn" type="button" data-print="review">Print my work / PDF</button>' : ''}</div>
       <div data-top></div>
       <div data-blocks>${blocks}</div>
       <div data-handin></div><div class="nd-submit" data-submit></div>`;
     app.classList.toggle('nd-paper-mode', paperMode());
+    app.classList.toggle('nd-extra-task', t.group === 'extra');
+    // Native question tables retain their column relationships and use the standard answer controls.
+    app.querySelectorAll('[data-answer-slot]').forEach((slot) => {
+      const id = slot.dataset.answerSlot;
+      const field = Array.from(app.querySelectorAll('[data-q]')).find((node) => node.dataset.q === id);
+      if (field) slot.append(field);
+    });
+    if (t.group === 'extra') {
+      const key = 'niu-extra-folds:' + t.id;
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch (_) { /* Keep defaults. */ }
+      app.querySelectorAll('[data-blocks] details').forEach((fold, i) => {
+        fold.open = saved[i] === true;
+        fold.addEventListener('toggle', () => {
+          if (document.body.classList.contains('nd-printing')) return;
+          saved[i] = fold.open;
+          try { localStorage.setItem(key, JSON.stringify(saved)); } catch (_) { /* Private browser. */ }
+        });
+      });
+    }
     renderTop();
     renderHandin();
     renderSubmit();

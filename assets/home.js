@@ -14,13 +14,14 @@
       app.innerHTML = `
         <p class="nd-kicker">Niu · DSE English</p>
         <h1>Welcome back</h1>
-        <p class="nd-lead">课程记录、练习与模考、错题本和词汇都在这里。</p>
+        <p class="nd-lead">课程记录、练习与模考、拓展练习、错题本和词汇都在这里。</p>
         <div class="nd-tiles">
           <a class="nd-tile" href="practice/"><b>${data.counts.practice}</b><strong>Practice &amp; Mock</strong><span>练习与模考</span></a>
           <a class="nd-tile" href="mistake-log/"><b>${data.counts.mistakesOpen}</b><strong>Mistake Log</strong><span>待复习的错题</span></a>
           <a class="nd-tile" href="vocabulary/"><b>${data.counts.words}</b><strong>Vocabulary</strong><span>词汇</span></a>
         </div>
         <section class="nd-section"><h2>To do <small>待完成</small></h2>${todo}</section>
+        <section class="nd-section"><h2>Extra Practice <small>拓展练习</small></h2><div class="nd-cards"><a class="nd-card nd-card-link" href="extra-practice/"><h3>Listening · 听力</h3><p>HKALE / AS Use of English</p><span class="nd-go">Open →</span></a></div></section>
         <section class="nd-section"><h2>Class Logbook <small>课程记录</small></h2>${classes}</section>`;
     } catch (error) { N.fail(app, error); }
   });

@@ -47,6 +47,9 @@
   .nd-print-answer { display: block !important; margin: 3pt 0 !important; padding: 2pt 0 !important; height: auto !important; max-height: none !important; overflow: visible !important; break-inside: auto !important; }
   .nd-print-mark { display: inline-block !important; width: 10pt; flex: 0 0 10pt; font: 10pt/1.3 Arial, sans-serif !important; }
   .nd-print-empty.nd-print-short-space { min-height: 24pt !important; border-bottom: .5pt solid #aaa; }
+  .nd-extra-task .nd-print-empty.nd-print-short-space { min-height: 14pt !important; }
+  .nd-extra-task .nd-q { margin: 1.5pt 0 !important; padding: 1pt 0 !important; }
+  .nd-extra-task .nd-print-answer { margin: 2pt 0 !important; padding: 1pt 0 !important; }
   .nd-print-empty.nd-print-long-space { min-height: 52pt !important; border-bottom: .5pt solid #aaa; }
   .nd-print-columns { columns: 2; column-gap: 6mm; column-rule: .4pt solid #ddd; }
   .nd-count, .nd-optional, .nd-or, .nd-note { font-size: 8.5pt !important; margin: 2pt 0 !important; }
