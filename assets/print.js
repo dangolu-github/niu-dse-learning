@@ -45,19 +45,37 @@
       state.added.push(node);
     });
 
-    app.querySelectorAll('.nd-q').forEach((question) => {
-      const text = question.textContent.length;
-      const longAnswer = question.querySelector('textarea[rows]');
-      if (text < 1000 && !question.querySelector('table, img') && (!longAnswer || Number(longAnswer.rows) <= 3)) {
+    // The live counter is UI; its authored word-range guidance belongs on paper.
+    app.querySelectorAll('.nd-count[data-min][data-max]').forEach((counter) => {
+      const min = Number(counter.dataset.min), max = Number(counter.dataset.max);
+      if (!Number.isFinite(min) || !Number.isFinite(max) || max <= 0) return;
+      const guide = document.createElement('p');
+      guide.className = 'nd-print-value nd-print-guide';
+      guide.textContent = `Suggested length 建议字数: ${min}–${max} words`;
+      counter.insertAdjacentElement('afterend', guide);
+      state.added.push(guide);
+    });
+
+    // Measure the text that will actually print: full answer surrogates and released
+    // feedback count; hidden controls and blank-print corrections do not.
+    const questions = Array.from(app.querySelectorAll('.nd-q'));
+    const shortQuestions = new Set();
+    questions.forEach((question) => {
+      const copy = question.cloneNode(true);
+      copy.querySelectorAll('[hidden], [data-no-print], .no-print, .nd-print-control, .nd-count, .nd-msg').forEach(node => node.remove());
+      if (state.blank) copy.querySelectorAll('.nd-verdict, [data-print-feedback], .nd-paper-review, .nd-review').forEach(node => node.remove());
+      const text = copy.textContent;
+      const longAnswer = Array.from(question.querySelectorAll('textarea')).some(node => Number(node.rows) > 3);
+      if (text.length < 1000 && text.split('\n').length < 18 && !copy.querySelector('table, img') && !longAnswer) {
         question.classList.add('nd-print-short');
         state.classes.push([question, 'nd-print-short']);
+        if (text.length < 700) shortQuestions.add(question);
       }
     });
     const blocks = app.querySelector('[data-blocks]');
-    if (blocks && !blocks.querySelector('.nd-doc, .nd-pages, table') &&
-        !Array.from(blocks.querySelectorAll('textarea')).some((node) => Number(node.rows) > 3) &&
-        blocks.querySelectorAll('.nd-q').length >= 6 &&
-        !blocks.querySelector('.nd-verdict, [data-print-feedback]')) {
+    const blockQuestions = blocks ? Array.from(blocks.querySelectorAll('.nd-q')) : [];
+    if (blocks && !blocks.querySelector('.nd-doc, .nd-pages, table, img') &&
+        blockQuestions.length >= 6 && blockQuestions.every(question => shortQuestions.has(question))) {
       blocks.classList.add('nd-print-columns');
       state.classes.push([blocks, 'nd-print-columns']);
     }

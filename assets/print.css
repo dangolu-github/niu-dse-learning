@@ -1,21 +1,21 @@
 /* Compact paper layout; printing changes neither stored answers nor release gates. */
 .nd-print-value { display: none; }
 @media print {
-  @page { size: A4; margin: 10mm 11mm; }
+  @page { size: A4; margin: 8mm 10mm; }
   html, body { background: #fff !important; color: #111 !important; }
-  body { font-size: 10.2pt !important; line-height: 1.34 !important; }
+  body { font-size: 10.2pt !important; line-height: 1.28 !important; }
   .nd-page { width: auto !important; max-width: none !important; padding: 0 !important; margin: 0 !important; }
   .nd-top, .nd-preview, .nd-taskbar, .nd-actions, .nd-submit, .nd-back, .nd-chips,
   .nd-retry, .nd-drop, .nd-progress, .nd-rec, .nd-filepick, .nd-files, .nd-file,
   .nd-search, .nd-check, .nd-word .tools, .nd-method, .nd-submission-method,
+  .nd-kicker, .nd-banner, .nd-count, .nd-msg, .nd-audio, .nd-speak-panel,
   [data-method], [data-paper-upload], [data-no-print], .no-print,
   button, input[type="file"], audio, video, .nd-print-control { display: none !important; }
-  .nd-page h1 { font-size: 16pt !important; line-height: 1.15 !important; margin: 0 0 5pt !important; }
-  .nd-kicker { font-size: 8pt !important; letter-spacing: .04em !important; margin: 0 0 2pt !important; }
+  .nd-page h1 { font-size: 14pt !important; line-height: 1.15 !important; margin: 0 0 4pt !important; }
   h2, h3, h4, summary, legend, .nd-prompt-line { break-after: avoid; }
   .nd-page h2, .nd-rich h3 { font-size: 11.5pt !important; margin: 6pt 0 3pt !important; }
   .nd-rich h4, .nd-sub, .nd-part { font-size: 10.2pt !important; margin: 5pt 0 2pt !important; }
-  p, .nd-rich p, .nd-rich ul, .nd-rich ol { margin: 3pt 0 !important; orphans: 2; widows: 2; }
+  p, .nd-rich p, .nd-rich ul, .nd-rich ol { margin: 2pt 0 !important; orphans: 2; widows: 2; }
   ul, ol { padding-left: 16pt; }
   a { color: inherit !important; text-decoration: none !important; }
   details, .nd-q, .nd-block, .nd-fold, .nd-doc, .nd-pages, .nd-section, .nd-rich,
@@ -24,23 +24,24 @@
     border-radius: 0 !important; box-shadow: none !important; background: none !important;
     break-inside: auto !important;
   }
-  details { border: 0 !important; margin: 5pt 0 !important; padding: 0 !important; }
+  details { border: 0 !important; margin: 3pt 0 !important; padding: 0 !important; }
   details > summary { display: block !important; list-style: none !important; padding: 2pt 0 !important; font-size: 10.5pt !important; }
   details > summary::-webkit-details-marker { display: none !important; }
   details > summary::after { content: none !important; }
   details > :not(summary) { display: block; }
   .nd-fold-body, .nd-doc-body, .nd-pages-body { padding: 0 !important; }
-  .nd-section { border-top: .5pt solid #999 !important; margin: 6pt 0 0 !important; padding: 5pt 0 0 !important; }
-  .nd-block, .nd-block.nd-rich, .nd-q, .nd-mistake { margin: 4pt 0 !important; padding: 4pt 0 !important; border: 0 !important; }
+  .nd-section { border-top: .5pt solid #999 !important; margin: 4pt 0 0 !important; padding: 3pt 0 0 !important; }
+  .nd-block, .nd-block.nd-rich, .nd-q, .nd-mistake { margin: 3pt 0 !important; padding: 2pt 0 !important; border: 0 !important; }
   .nd-q { border-bottom: .4pt solid #ccc !important; }
   .nd-q.nd-print-short { break-inside: avoid !important; }
-  .nd-q legend, .nd-q .nd-prompt-line { margin: 0 0 3pt !important; }
+  .nd-q legend, .nd-q .nd-prompt-line { margin: 0 0 2pt !important; }
   .nd-n { min-width: 15pt !important; height: auto !important; padding: 0 !important; margin-right: 4pt !important; color: #111 !important; background: none !important; font-size: 9.3pt !important; }
   .nd-opt { gap: 5pt !important; border: 0 !important; padding: 1pt 0 !important; margin: 1pt 0 !important; background: none !important; break-inside: avoid; }
   .nd-letter { color: #111 !important; }
   .nd-gap { display: block !important; }
-  .nd-gap-line { line-height: 1.65 !important; }
+  .nd-gap-line { line-height: 1.45 !important; }
   .nd-print-value { color: #111 !important; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .nd-print-guide { display: block !important; font-size: 8.5pt !important; }
   .nd-print-inline { display: inline !important; min-width: 90pt; border-bottom: .5pt solid #666; padding: 0 3pt; }
   .nd-print-inline.nd-print-empty { display: inline-block !important; width: 100pt; min-height: 12pt; }
   .nd-print-answer { display: block !important; margin: 3pt 0 !important; padding: 2pt 0 !important; height: auto !important; max-height: none !important; overflow: visible !important; break-inside: auto !important; }
@@ -48,14 +49,17 @@
   .nd-print-empty.nd-print-short-space { min-height: 24pt !important; border-bottom: .5pt solid #aaa; }
   .nd-print-empty.nd-print-long-space { min-height: 52pt !important; border-bottom: .5pt solid #aaa; }
   .nd-print-columns { columns: 2; column-gap: 6mm; column-rule: .4pt solid #ddd; }
-  .nd-print-columns > .nd-rich { break-inside: avoid !important; }
   .nd-count, .nd-optional, .nd-or, .nd-note { font-size: 8.5pt !important; margin: 2pt 0 !important; }
   .nd-count:empty, .nd-msg:empty { display: none !important; }
-  .nd-verdict, .nd-result, .nd-banner { border: .5pt solid #aaa !important; margin: 4pt 0 !important; padding: 4pt 6pt !important; font-size: 9.4pt !important; color: #111 !important; }
+  .nd-verdict, .nd-result { border: .5pt solid #aaa !important; margin: 2pt 0 !important; padding: 3pt 4pt !important; font-size: 9.4pt !important; color: #111 !important; }
+  .nd-verdict p { margin: 1.5pt 0 !important; }
   .nd-verdict .label { font-weight: 700 !important; }
-  .nd-score { font-size: 13pt !important; margin: 2pt 0 !important; }
+  .nd-result { border: 0 !important; border-bottom: .5pt solid #aaa !important; padding: 0 0 3pt !important; }
+  .nd-result h2 { display: none !important; }
+  .nd-score { font-size: 11pt !important; margin: 0 !important; }
   .nd-pre, .nd-notes { white-space: pre-wrap !important; overflow-wrap: anywhere !important; font-size: inherit !important; }
   .nd-notes, .nd-example, .nd-prompt, .nd-memo { padding: 3pt 6pt !important; margin: 3pt 0 !important; }
+  .nd-example, .nd-prompt { font-size: inherit !important; border: 0 !important; }
   .nd-lines { padding-left: 25pt !important; margin: 3pt 0 5pt !important; }
   .nd-lines li { line-height: 1.35 !important; }
   .nd-lines li.nd-pstart { margin-top: 5pt !important; }
