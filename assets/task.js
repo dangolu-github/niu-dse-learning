@@ -118,9 +118,17 @@
       const secondOfGroup = b.type === 'q' && groups.some((g) => g.indexOf(b.id) > 0);
       blocks += (secondOfGroup ? '<p class="nd-or">— OR 或者 —</p>' : '') + blockHtml(b, index);
     });
-    const back = t.classId ? `<a href="${N.root}class/?id=${encodeURIComponent(t.classId)}">← Class</a> · ` : '';
+    // Homework belongs to its class page, not to Practice & Mock: the header marks Classes, not Practice & Mock.
+    if (t.group === 'homework') {
+      document.querySelectorAll('.nd-nav a').forEach((a, i) => (i === 0 ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+    }
+    const back = [
+      t.classId ? `<a href="${N.root}class/?id=${encodeURIComponent(t.classId)}">← Class</a>` : '',
+      t.group === 'extra' ? `<a href="${N.root}extra-practice/">← Extra Practice</a>`
+        : t.group !== 'homework' ? `<a href="${N.root}practice/">← Practice &amp; Mock</a>` : t.classId ? '' : `<a href="${N.root}">← Classes</a>`
+    ].filter(Boolean).join(' · ');
     app.innerHTML = `
-      <p class="nd-back">${back}${t.group === 'extra' ? `<a href="${N.root}extra-practice/">← Extra Practice</a>` : `<a href="${N.root}practice/">← Practice &amp; Mock</a>`}</p>
+      <p class="nd-back">${back}</p>
       <p class="nd-kicker">${N.esc(t.group === 'extra' ? 'Extra Practice · Listening' : t.paperLabel)}${t.source ? ' · ' + N.esc(t.source) : ''}</p>
       <h1>${N.esc(t.label)}</h1>
       <div class="nd-taskbar"><span data-time></span><span data-progress></span><span class="grow"></span><span data-status role="status"></span><button class="nd-linkbtn" type="button" data-print="blank">Print questions / PDF</button>${S.submission ? '<button class="nd-linkbtn" type="button" data-print="review">Print my work / PDF</button>' : ''}</div>
