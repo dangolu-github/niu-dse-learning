@@ -47,15 +47,18 @@
   .nd-print-answer { display: block !important; margin: 3pt 0 !important; padding: 2pt 0 !important; height: auto !important; max-height: none !important; overflow: visible !important; break-inside: auto !important; }
   .nd-print-mark { display: inline-block !important; width: 10pt; flex: 0 0 10pt; font: 10pt/1.3 Arial, sans-serif !important; }
   .nd-print-empty.nd-print-short-space { min-height: 24pt !important; border-bottom: .5pt solid #aaa; }
-  .nd-extra-task .nd-print-empty.nd-print-short-space { min-height: 14pt !important; }
-  .nd-extra-task .nd-q { margin: 1.5pt 0 !important; padding: 1pt 0 !important; }
+  .nd-extra-task .nd-print-empty.nd-print-short-space { min-height: 12pt !important; }
+  .nd-extra-task .nd-q { margin: 1pt 0 !important; padding: .5pt 0 !important; }
   .nd-extra-task .nd-print-answer { margin: 2pt 0 !important; padding: 1pt 0 !important; }
   /* A single writing rule beside each short prompt; table borders already supply structure. */
   .nd-extra-task .nd-q .nd-prompt-line { font-weight: 400 !important; }
   .nd-print-blank .nd-extra-task .nd-print-short-answer { display: flex !important; align-items: baseline; flex-wrap: wrap; column-gap: 5pt; row-gap: 0; }
   .nd-print-blank .nd-extra-task .nd-print-short-answer .nd-prompt-line { flex: 0 1 auto; margin: 0 !important; }
-  .nd-print-blank .nd-extra-task .nd-print-short-answer .nd-print-answer { flex: 1 1 100pt; min-width: 85pt; min-height: 14pt !important; margin: 0 !important; padding: 0 !important; }
+  .nd-print-blank .nd-extra-task .nd-print-short-answer .nd-print-answer { flex: 1 1 100pt; min-width: 85pt; min-height: 12pt !important; margin: 0 !important; padding: 0 !important; }
   .nd-print-blank .nd-extra-task td .nd-print-short-answer { display: block !important; }
+  .nd-extra-task table { margin: 3pt 0 !important; }
+  .nd-extra-task th, .nd-extra-task td { padding: 2pt 4pt !important; }
+  .nd-extra-task .nd-flow { break-inside: avoid !important; }
   .nd-extra-task .nd-q legend { font-weight: 400 !important; }
   .nd-extra-task td .nd-q:last-child .nd-print-empty { border-bottom: 0 !important; }
 
