@@ -1,0 +1,75 @@
+/* Compact paper layout; printing changes neither stored answers nor release gates. */
+.nd-print-value { display: none; }
+@media print {
+  @page { size: A4; margin: 10mm 11mm; }
+  html, body { background: #fff !important; color: #111 !important; }
+  body { font-size: 10.2pt !important; line-height: 1.34 !important; }
+  .nd-page { width: auto !important; max-width: none !important; padding: 0 !important; margin: 0 !important; }
+  .nd-top, .nd-preview, .nd-taskbar, .nd-actions, .nd-submit, .nd-back, .nd-chips,
+  .nd-retry, .nd-drop, .nd-progress, .nd-rec, .nd-filepick, .nd-files, .nd-file,
+  .nd-search, .nd-check, .nd-word .tools, .nd-method, .nd-submission-method,
+  [data-method], [data-paper-upload], [data-no-print], .no-print,
+  button, input[type="file"], audio, video, .nd-print-control { display: none !important; }
+  .nd-page h1 { font-size: 16pt !important; line-height: 1.15 !important; margin: 0 0 5pt !important; }
+  .nd-kicker { font-size: 8pt !important; letter-spacing: .04em !important; margin: 0 0 2pt !important; }
+  h2, h3, h4, summary, legend, .nd-prompt-line { break-after: avoid; }
+  .nd-page h2, .nd-rich h3 { font-size: 11.5pt !important; margin: 6pt 0 3pt !important; }
+  .nd-rich h4, .nd-sub, .nd-part { font-size: 10.2pt !important; margin: 5pt 0 2pt !important; }
+  p, .nd-rich p, .nd-rich ul, .nd-rich ol { margin: 3pt 0 !important; orphans: 2; widows: 2; }
+  ul, ol { padding-left: 16pt; }
+  a { color: inherit !important; text-decoration: none !important; }
+  details, .nd-q, .nd-block, .nd-fold, .nd-doc, .nd-pages, .nd-section, .nd-rich,
+  .nd-result, .nd-verdict, .nd-mistake, .nd-cards, .nd-notes, .nd-prompt, .nd-memo {
+    max-height: none !important; height: auto; overflow: visible !important;
+    border-radius: 0 !important; box-shadow: none !important; background: none !important;
+    break-inside: auto !important;
+  }
+  details { border: 0 !important; margin: 5pt 0 !important; padding: 0 !important; }
+  details > summary { display: block !important; list-style: none !important; padding: 2pt 0 !important; font-size: 10.5pt !important; }
+  details > summary::-webkit-details-marker { display: none !important; }
+  details > summary::after { content: none !important; }
+  details > :not(summary) { display: block; }
+  .nd-fold-body, .nd-doc-body, .nd-pages-body { padding: 0 !important; }
+  .nd-section { border-top: .5pt solid #999 !important; margin: 6pt 0 0 !important; padding: 5pt 0 0 !important; }
+  .nd-block, .nd-block.nd-rich, .nd-q, .nd-mistake { margin: 4pt 0 !important; padding: 4pt 0 !important; border: 0 !important; }
+  .nd-q { border-bottom: .4pt solid #ccc !important; }
+  .nd-q.nd-print-short { break-inside: avoid !important; }
+  .nd-q legend, .nd-q .nd-prompt-line { margin: 0 0 3pt !important; }
+  .nd-n { min-width: 15pt !important; height: auto !important; padding: 0 !important; margin-right: 4pt !important; color: #111 !important; background: none !important; font-size: 9.3pt !important; }
+  .nd-opt { gap: 5pt !important; border: 0 !important; padding: 1pt 0 !important; margin: 1pt 0 !important; background: none !important; break-inside: avoid; }
+  .nd-letter { color: #111 !important; }
+  .nd-gap { display: block !important; }
+  .nd-gap-line { line-height: 1.65 !important; }
+  .nd-print-value { color: #111 !important; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .nd-print-inline { display: inline !important; min-width: 90pt; border-bottom: .5pt solid #666; padding: 0 3pt; }
+  .nd-print-inline.nd-print-empty { display: inline-block !important; width: 100pt; min-height: 12pt; }
+  .nd-print-answer { display: block !important; margin: 3pt 0 !important; padding: 2pt 0 !important; height: auto !important; max-height: none !important; overflow: visible !important; break-inside: auto !important; }
+  .nd-print-mark { display: inline-block !important; width: 10pt; flex: 0 0 10pt; font: 10pt/1.3 Arial, sans-serif !important; }
+  .nd-print-empty.nd-print-short-space { min-height: 24pt !important; border-bottom: .5pt solid #aaa; }
+  .nd-print-empty.nd-print-long-space { min-height: 52pt !important; border-bottom: .5pt solid #aaa; }
+  .nd-print-columns { columns: 2; column-gap: 6mm; column-rule: .4pt solid #ddd; }
+  .nd-print-columns > .nd-rich { break-inside: avoid !important; }
+  .nd-count, .nd-optional, .nd-or, .nd-note { font-size: 8.5pt !important; margin: 2pt 0 !important; }
+  .nd-count:empty, .nd-msg:empty { display: none !important; }
+  .nd-verdict, .nd-result, .nd-banner { border: .5pt solid #aaa !important; margin: 4pt 0 !important; padding: 4pt 6pt !important; font-size: 9.4pt !important; color: #111 !important; }
+  .nd-verdict .label { font-weight: 700 !important; }
+  .nd-score { font-size: 13pt !important; margin: 2pt 0 !important; }
+  .nd-pre, .nd-notes { white-space: pre-wrap !important; overflow-wrap: anywhere !important; font-size: inherit !important; }
+  .nd-notes, .nd-example, .nd-prompt, .nd-memo { padding: 3pt 6pt !important; margin: 3pt 0 !important; }
+  .nd-lines { padding-left: 25pt !important; margin: 3pt 0 5pt !important; }
+  .nd-lines li { line-height: 1.35 !important; }
+  .nd-lines li.nd-pstart { margin-top: 5pt !important; }
+  table, .nd-table, .nd-wordtable { width: 100% !important; max-width: none !important; border-collapse: collapse !important; font-size: 9pt !important; overflow: visible !important; break-inside: auto !important; }
+  thead, .nd-wordtable thead { display: table-header-group !important; }
+  tbody { display: table-row-group !important; }
+  tr, .nd-wordtable tr { display: table-row !important; break-inside: avoid; }
+  th, td, .nd-table th, .nd-table td, .nd-rich th, .nd-rich td, .nd-wordtable th, .nd-wordtable td { display: table-cell !important; float: none !important; padding: 3pt 4pt !important; border-color: #aaa !important; }
+  .nd-wordtable .ck { display: none !important; }
+  img, .nd-pages-body img, .nd-figure .nd-pages-body img { max-width: 100% !important; width: auto !important; max-height: 235mm; object-fit: contain; margin: 3pt auto !important; border: 0 !important; break-inside: avoid; }
+  .nd-card, .nd-log a, .nd-word { padding: 4pt 0 !important; margin: 0 !important; border-radius: 0 !important; break-inside: avoid; }
+  .nd-card h3, .nd-log strong, .nd-word .w { font-size: 10.5pt !important; }
+  .nd-meta, .nd-word .pos, .nd-word .ex { font-size: 9pt !important; }
+  .nd-print-blank .nd-verdict, .nd-print-blank .nd-result, .nd-print-blank .nd-banner,
+  .nd-print-blank [data-print-feedback], .nd-print-blank .nd-paper-review,
+  .nd-print-blank .nd-review, .nd-print-blank .nd-count { display: none !important; }
+}
