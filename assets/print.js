@@ -8,7 +8,7 @@
   function prepare(options = {}) {
     if (state) return;
     const app = root();
-    state = { details: [], controls: [], added: [], classes: [], blank: Boolean(options.blank) };
+    state = { details: [], controls: [], added: [], classes: [], labels: [], blank: Boolean(options.blank) };
     document.body.classList.add('nd-printing');
     document.body.classList.toggle('nd-print-blank', state.blank);
     app.querySelectorAll('details').forEach((node) => {
@@ -58,6 +58,15 @@
 
     // Measure the text that will actually print: full answer surrogates and released
     // feedback count; hidden controls and blank-print corrections do not.
+    if (state.blank && app.classList.contains('nd-extra-task')) {
+      app.querySelectorAll('.nd-prompt-line').forEach(prompt => {
+        prompt.childNodes.forEach(node => {
+          if (node.nodeType === Node.TEXT_NODE && /^\s*Answer:\s*$/.test(node.textContent)) {
+            state.labels.push([node, node.textContent]); node.textContent = '';
+          }
+        });
+      });
+    }
     const questions = Array.from(app.querySelectorAll('.nd-q'));
     const shortQuestions = new Set();
     questions.forEach((question) => {
@@ -66,6 +75,10 @@
       if (state.blank) copy.querySelectorAll('.nd-verdict, [data-print-feedback], .nd-paper-review, .nd-review').forEach(node => node.remove());
       const text = copy.textContent;
       const longAnswer = Array.from(question.querySelectorAll('textarea')).some(node => Number(node.rows) > 3);
+      if (question.querySelector('textarea') && !longAnswer) {
+        question.classList.add('nd-print-short-answer');
+        state.classes.push([question, 'nd-print-short-answer']);
+      }
       if (text.length < 1000 && text.split('\n').length < 18 && !copy.querySelector('table, img') && !longAnswer) {
         question.classList.add('nd-print-short');
         state.classes.push([question, 'nd-print-short']);
@@ -86,6 +99,7 @@
     if (!state) return;
     const previous = state;
     state = null;
+    previous.labels.forEach(([node, text]) => { node.textContent = text; });
     previous.added.forEach((node) => node.remove());
     previous.controls.forEach((node) => node.classList.remove('nd-print-control'));
     previous.classes.forEach(([node, name]) => node.classList.remove(name));

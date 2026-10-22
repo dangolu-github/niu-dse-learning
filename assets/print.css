@@ -32,7 +32,7 @@
   .nd-fold-body, .nd-doc-body, .nd-pages-body { padding: 0 !important; }
   .nd-section { border-top: .5pt solid #999 !important; margin: 4pt 0 0 !important; padding: 3pt 0 0 !important; }
   .nd-block, .nd-block.nd-rich, .nd-q, .nd-mistake { margin: 3pt 0 !important; padding: 2pt 0 !important; border: 0 !important; }
-  .nd-q { border-bottom: .4pt solid #ccc !important; }
+  .nd-q { border: 0 !important; }
   .nd-q.nd-print-short { break-inside: avoid !important; }
   .nd-q legend, .nd-q .nd-prompt-line { margin: 0 0 2pt !important; }
   .nd-n { min-width: 15pt !important; height: auto !important; padding: 0 !important; margin-right: 4pt !important; color: #111 !important; background: none !important; font-size: 9.3pt !important; }
@@ -50,6 +50,15 @@
   .nd-extra-task .nd-print-empty.nd-print-short-space { min-height: 14pt !important; }
   .nd-extra-task .nd-q { margin: 1.5pt 0 !important; padding: 1pt 0 !important; }
   .nd-extra-task .nd-print-answer { margin: 2pt 0 !important; padding: 1pt 0 !important; }
+  /* A single writing rule beside each short prompt; table borders already supply structure. */
+  .nd-extra-task .nd-q .nd-prompt-line { font-weight: 400 !important; }
+  .nd-print-blank .nd-extra-task .nd-print-short-answer { display: flex !important; align-items: baseline; flex-wrap: wrap; column-gap: 5pt; row-gap: 0; }
+  .nd-print-blank .nd-extra-task .nd-print-short-answer .nd-prompt-line { flex: 0 1 auto; margin: 0 !important; }
+  .nd-print-blank .nd-extra-task .nd-print-short-answer .nd-print-answer { flex: 1 1 100pt; min-width: 85pt; min-height: 14pt !important; margin: 0 !important; padding: 0 !important; }
+  .nd-print-blank .nd-extra-task td .nd-print-short-answer { display: block !important; }
+  .nd-extra-task .nd-q legend { font-weight: 400 !important; }
+  .nd-extra-task td .nd-q:last-child .nd-print-empty { border-bottom: 0 !important; }
+
   .nd-print-empty.nd-print-long-space { min-height: 52pt !important; border-bottom: .5pt solid #aaa; }
   .nd-print-columns { columns: 2; column-gap: 6mm; column-rule: .4pt solid #ddd; }
   .nd-count, .nd-optional, .nd-or, .nd-note { font-size: 8.5pt !important; margin: 2pt 0 !important; }
