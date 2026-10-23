@@ -72,7 +72,7 @@
     app.innerHTML = `<p class="nd-kicker">Niu · DSE English</p><h1>Extra Practice</h1>
       <p class="nd-lead">拓展练习：听力原题节选自由选做；语法书按每周指定的单元做，其余自选，做完在这里交。</p>
       <details class="nd-section nd-paper" data-extra-fold="listening"><summary><h2>Listening <small>听力</small></h2><span>${listening.length}</span></summary>
-      <p>HKALE / AS Use of English</p><div class="nd-cards">${listening.length ? listening.map((t) => N.taskCard({ ...t, paperLabel: 'Listening', part: '' })).join('') : '<p>No listening practice yet.</p>'}</div></details>
+      <p>拓展听力练习，自由选做。</p><div class="nd-cards">${listening.length ? listening.map((t) => N.taskCard({ ...t, paperLabel: 'Listening', part: '' })).join('') : '<p>No listening practice yet.</p>'}</div></details>
       <details class="nd-section nd-paper" data-extra-fold="grammar"><summary><h2>Grammar <small>语法</small></h2><span>${plan.sections.filter((s) => s.ready).length}</span></summary>
         <p>${N.esc(plan.book.title || 'Grammar book')}${plan.book.edition ? ' · ' + N.esc(plan.book.edition) : ''}${plan.book.note ? '<br>' + N.esc(plan.book.note) : ''}</p>
         <div class="nd-block"><h3 class="nd-sub">This week <small>本周单元</small></h3>${weekHtml(plan)}</div>
