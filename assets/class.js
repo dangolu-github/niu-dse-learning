@@ -45,6 +45,11 @@
         <section class="nd-section" id="class-summary"><h2>Class Summary <small>课堂总结</small></h2>${summary}</section>
         <section class="nd-section" id="class-words"><h2>Class Words <small>本课单词</small></h2>${classWords}</section>
         <section class="nd-section" id="homework"><h2>Homework <small>作业</small></h2>${homework}</section>`;
+      // A handout may show a private page image (an original question page): loaded through the backend after the access check.
+      app.querySelectorAll('img[data-media]').forEach((img) => {
+        N.loadMedia(img.dataset.media).then((blob) => { img.src = URL.createObjectURL(blob); img.removeAttribute('data-loading'); })
+          .catch(() => { img.alt = 'This page could not be loaded. 图片暂时无法加载。'; });
+      });
       const box = () => document.getElementById('class-words');
       const redraw = () => { box().innerHTML = '<h2>Class Words <small>本课单词</small></h2>' + classWordsHtml(); };
       const say = (text, kind) => { const m = document.getElementById('copy-msg'); m.textContent = text; m.className = 'nd-msg' + (kind ? ' ' + kind : ''); };

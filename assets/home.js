@@ -21,7 +21,7 @@
           <a class="nd-tile" href="vocabulary/"><b>${data.counts.words}</b><strong>Vocabulary</strong><span>词汇</span></a>
         </div>
         <section class="nd-section"><h2>To do <small>待完成</small></h2>${todo}</section>
-        <section class="nd-section"><h2>Extra Practice <small>拓展练习</small></h2><div class="nd-cards"><a class="nd-card nd-card-link" href="extra-practice/"><h3>Listening · 听力</h3><p>HKALE / AS Use of English</p><span class="nd-go">Open →</span></a></div></section>
+        <section class="nd-section"><h2>Extra Practice <small>拓展练习</small></h2><div class="nd-cards"><a class="nd-card nd-card-link" href="extra-practice/"><h3>Listening · 听力</h3><p>HKALE / AS Use of English</p><span class="nd-go">Open →</span></a><a class="nd-card nd-card-link" href="extra-practice/#grammar"><h3>Grammar · 语法</h3><p>语法书按单元自学，随时交作业，老师批改后在同一页看</p><span class="nd-go">Open →</span></a></div></section>
         <section class="nd-section"><h2>Class Logbook <small>课程记录</small></h2>${classes}</section>`;
     } catch (error) { N.fail(app, error); }
   });
