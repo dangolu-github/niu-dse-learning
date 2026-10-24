@@ -115,7 +115,8 @@
     });
     const blocks = app.querySelector('[data-blocks]');
     const blockQuestions = blocks ? Array.from(blocks.querySelectorAll('.nd-q')) : [];
-    if (blocks && !blocks.querySelector('.nd-doc, .nd-pages, table, img') &&
+    // A passage with the paper's own lines needs the full page width, so it never goes into columns.
+    if (blocks && !blocks.querySelector('.nd-doc, .nd-pages, ol.nd-lines, table, img') &&
         blockQuestions.length >= 6 && blockQuestions.every(question => shortQuestions.has(question))) {
       blocks.classList.add('nd-print-columns');
       state.classes.push([blocks, 'nd-print-columns']);
