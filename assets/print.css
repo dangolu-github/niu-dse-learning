@@ -1,5 +1,6 @@
 /* Compact paper layout; printing changes neither stored answers nor release gates. */
 .nd-print-value { display: none; }
+.nd-measure-lines > li { white-space: nowrap !important; font-size: var(--nd-measure-size, 12px) !important; }
 @media print {
   @page { size: A4; margin: 8mm 10mm; }
   html, body { background: #fff !important; color: #111 !important; }
@@ -41,7 +42,7 @@
   .nd-gap { display: block !important; }
   .nd-gap-line { line-height: 1.45 !important; }
   .nd-print-value { color: #111 !important; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .nd-print-guide { display: block !important; font-size: 8.5pt !important; }
+  .nd-print-guide { display: block !important; font-size: 8.5pt !important; break-before: avoid; }
   .nd-print-inline { display: inline !important; min-width: 90pt; border-bottom: .5pt solid #666; padding: 0 3pt; }
   .nd-print-inline.nd-print-empty { display: inline-block !important; width: 100pt; min-height: 12pt; }
   .nd-print-answer { display: block !important; margin: 3pt 0 !important; padding: 2pt 0 !important; height: auto !important; max-height: none !important; overflow: visible !important; break-inside: auto !important; }
@@ -63,6 +64,8 @@
   .nd-extra-task td .nd-q:last-child .nd-print-empty { border-bottom: 0 !important; }
 
   .nd-print-empty.nd-print-long-space { min-height: 52pt !important; border-bottom: .5pt solid #aaa; }
+  /* On a blank sheet a writing prompt, its space and its word guide stay on one page. */
+  .nd-print-blank .nd-q:has(.nd-print-long-space), .nd-print-blank .nd-q:has(.nd-print-guide) { break-inside: avoid !important; }
   .nd-print-columns { columns: 2; column-gap: 6mm; column-rule: .4pt solid #ddd; }
   .nd-count, .nd-optional, .nd-or, .nd-note { font-size: 8.5pt !important; margin: 2pt 0 !important; }
   .nd-count:empty, .nd-msg:empty { display: none !important; }
@@ -78,11 +81,18 @@
   .nd-lines { padding-left: 25pt !important; margin: 3pt 0 5pt !important; }
   .nd-lines li { line-height: 1.35 !important; }
   .nd-lines li.nd-pstart { margin-top: 5pt !important; }
+  /* One paper line = one printed line: the passage shrinks to its widest line (print.js), never below 7pt. */
+  @supports (font-size: 1cqi) {
+    .nd-lines.nd-fit-lines { container-type: inline-size; }
+    .nd-lines.nd-fit-lines > li { white-space: nowrap !important; font-size: max(7pt, min(1em, calc(98cqi / var(--nd-line-em)))) !important; }
+  }
   table, .nd-table, .nd-wordtable { width: 100% !important; max-width: none !important; border-collapse: collapse !important; font-size: 9pt !important; overflow: visible !important; break-inside: auto !important; }
   thead, .nd-wordtable thead { display: table-header-group !important; }
   tbody { display: table-row-group !important; }
   tr, .nd-wordtable tr { display: table-row !important; break-inside: avoid; }
   th, td, .nd-table th, .nd-table td, .nd-rich th, .nd-rich td, .nd-wordtable th, .nd-wordtable td { display: table-cell !important; float: none !important; padding: 3pt 4pt !important; border-color: #aaa !important; }
+  /* A column is never narrower than its longest word, so words and numbers stay whole. */
+  th, td { overflow-wrap: break-word !important; word-break: normal !important; }
   .nd-wordtable .ck { display: none !important; }
   img, .nd-pages-body img, .nd-figure .nd-pages-body img { max-width: 100% !important; width: auto !important; max-height: 235mm; object-fit: contain; margin: 3pt auto !important; border: 0 !important; break-inside: avoid; }
   .nd-card, .nd-log a, .nd-word { padding: 4pt 0 !important; margin: 0 !important; border-radius: 0 !important; break-inside: avoid; }
