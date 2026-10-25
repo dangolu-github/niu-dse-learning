@@ -67,6 +67,9 @@
   /* On a blank sheet a writing prompt, its space and its word guide stay on one page. */
   .nd-print-blank .nd-q:has(.nd-print-long-space), .nd-print-blank .nd-q:has(.nd-print-guide) { break-inside: avoid !important; }
   .nd-print-columns { columns: 2; column-gap: 6mm; column-rule: .4pt solid #ddd; }
+  /* WebKit (Safari, every iPad/iPhone browser) prints a column block as one column and slices lines at
+     page breaks; there it prints one column. The @supports test is true in WebKit only. */
+  @supports (font: -apple-system-body) { .nd-print-columns { columns: auto !important; column-rule: none !important; } }
   .nd-count, .nd-optional, .nd-or, .nd-note { font-size: 8.5pt !important; margin: 2pt 0 !important; }
   .nd-count:empty, .nd-msg:empty { display: none !important; }
   .nd-verdict, .nd-result { border: .5pt solid #aaa !important; margin: 2pt 0 !important; padding: 3pt 4pt !important; font-size: 9.4pt !important; color: #111 !important; }
@@ -96,6 +99,10 @@
   .nd-wordtable .ck { display: none !important; }
   img, .nd-pages-body img, .nd-figure .nd-pages-body img { max-width: 100% !important; width: auto !important; max-height: 235mm; object-fit: contain; margin: 3pt auto !important; border: 0 !important; break-inside: avoid; }
   .nd-card, .nd-log a, .nd-word { padding: 4pt 0 !important; margin: 0 !important; border-radius: 0 !important; break-inside: avoid; }
+  /* Grid word cards are sliced at page breaks in WebKit; plain blocks keep each card whole. */
+  .nd-words { display: block !important; }
+  .nd-words > .nd-word { display: block !important; margin: 0 0 4pt !important; }
+  .nd-word .ex { display: block !important; }
   .nd-card h3, .nd-log strong, .nd-word .w { font-size: 10.5pt !important; }
   .nd-meta, .nd-word .pos, .nd-word .ex { font-size: 9pt !important; }
   .nd-print-blank .nd-verdict, .nd-print-blank .nd-result, .nd-print-blank .nd-banner,
