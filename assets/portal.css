@@ -132,18 +132,36 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 .nd-q { margin: 12px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 .nd-q legend, .nd-q .nd-prompt-line { padding: 0; margin: 0 0 10px; font-weight: 650; }
-fieldset.nd-q { min-width: 0; }
+fieldset.nd-q { min-width: 0; display: flow-root; }
+/* The question sits inside its box, not on the box's border. */
+fieldset.nd-q > legend { float: left; width: 100%; }
+fieldset.nd-q > legend + * { clear: both; }
+.nd-mc-inline .nd-opt { display: inline-flex; margin: 4px 8px 4px 0; padding: 7px 14px 7px 12px; }
 .nd-n { display: inline-grid; place-items: center; min-width: 28px; height: 28px; margin-right: 8px; padding: 0 7px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 850; vertical-align: middle; }
 .nd-optional { margin-left: 6px; color: var(--muted); font-size: 13px; font-weight: 600; }
 .nd-opt { display: flex; gap: 10px; align-items: flex-start; padding: 9px 12px; margin: 6px 0; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
 .nd-opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
 .nd-opt input { margin-top: 5px; }
 .nd-letter { font-weight: 800; color: var(--accent); }
-.nd-gap { display: flex; align-items: baseline; gap: 4px; }
+.nd-gap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
 .nd-gap-line { flex: 1; line-height: 2.3; }
-.nd-gap input { width: min(100%, 22em); padding: 5px 9px; border: 0; border-bottom: 2px solid var(--accent); border-radius: 6px 6px 0 0; background: #f4f7fc; }
+.nd-gap > .nd-verdict { flex: 1 0 100%; }
+.nd-gap input { width: min(100%, 22em); padding: 5px 9px; border: 0; border-bottom: 2px solid var(--accent); border-radius: 6px 6px 0 0; background: #f4f7fc; line-height: 1.5; }
+.nd-gap-mid input { width: min(100%, 13em); }
 .nd-q textarea, .nd-q input[type=text] { max-width: 100%; }
 .nd-q textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; line-height: 1.7; resize: vertical; background: #fff; }
+.nd-q textarea.nd-grow { resize: none; overflow: hidden; min-height: 46px; }
+.nd-q-bare { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 4px; }
+.nd-q-bare > .nd-n { margin-top: 9px; }
+.nd-q-bare > textarea { flex: 1 1 240px; width: auto; }
+.nd-q-bare > .nd-verdict { flex: 1 0 100%; }
+/* The parts of one question, or a run of note-sheet blanks, share one box. */
+.nd-qgroup { margin: 12px 0; padding: 4px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.nd-qgroup > .nd-q { margin: 0; padding: 12px 0; border: 0; border-top: 1px solid #e7ecf4; border-radius: 0; background: none; }
+.nd-qgroup > :first-child { border-top: 0; }
+.nd-qgroup > .nd-block.nd-rich { margin: 0; padding: 12px 0 4px; border: 0; border-radius: 0; background: none; }
+.nd-q-bare > .nd-n { min-width: 3.6em; }
+.nd-qgroup-notes > .nd-q { padding: 6px 0; border-top: 0; }
 .nd-q textarea:focus, .nd-gap input:focus, .nd-field input:focus, .nd-field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .nd-q :disabled { background: #f1f3f7; color: var(--ink); opacity: 1; -webkit-text-fill-color: var(--ink); }
 .nd-count { margin: 6px 0 0; color: var(--muted); font-size: 13px; text-align: right; }
@@ -240,6 +258,8 @@ fieldset.nd-q { min-width: 0; }
   .nd-nav a small { display: none; }
   .nd-actions .nd-btn { flex: 1 1 140px; }
   .nd-q, .nd-block.nd-rich { padding: 14px; }
+  .nd-qgroup { padding: 2px 14px; }
+  .nd-mc-inline .nd-opt { margin: 3px 6px 3px 0; padding: 6px 10px 6px 8px; }
 }
 @media print {
   .nd-top, .nd-preview, .nd-taskbar, .nd-actions, .nd-submit, .nd-back, .nd-audio, .nd-speak-panel, .nd-drop, .nd-chips, .nd-retry, .no-print { display: none !important; }
@@ -266,8 +286,9 @@ fieldset.nd-q { min-width: 0; }
 .nd-doc-body { padding: 0 20px 18px; }
 .nd-rich table { border-collapse: collapse; width: 100%; margin: 8px 0; }
 .nd-rich th, .nd-rich td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; overflow-wrap: break-word; }
-/* Phones only: a wide table may break inside a word rather than push the page sideways. */
-@media (max-width: 640px) { .nd-rich th, .nd-rich td { overflow-wrap: anywhere; } }
+.nd-rich { overflow-wrap: break-word; }
+/* Phones: a table wider than the screen scrolls sideways inside its box; words stay whole. */
+@media (max-width: 640px) { .nd-rich table:not(.nd-forum) { display: block; max-width: 100%; overflow-x: auto; } .nd-rich th, .nd-rich td { min-width: 4.5em; } }
 .nd-figure .nd-pages-body img { max-width: 620px; }
 /* Reading passages keep the paper's printed lines: one <li> per printed line, data-n where a number is printed */
 .nd-lines { list-style: none; margin: 8px 0 12px; padding: 0 0 0 3.2em; }
@@ -277,6 +298,15 @@ fieldset.nd-q { min-width: 0; }
 .nd-doc-body .nd-src { color: var(--muted); font-size: 13px; }
 .nd-rich figure { margin: 10px 0; }
 @media (max-width: 600px) { .nd-lines { padding-left: 2.4em; } .nd-lines li[data-n]::before { left: -2.4em; width: 1.8em; } }
+/* On screen (task.js): each paper line on one line where it fits, else joined paragraphs with line-number marks. */
+.nd-lines-reflow { display: none; }
+@media screen {
+  body:not(.nd-printing) .nd-lines.nd-fit-screen > li { white-space: nowrap; font-size: var(--nd-screen-size, 1em); }
+  body:not(.nd-printing) .nd-lines.nd-reflowed { display: none; }
+  body:not(.nd-printing) .nd-lines.nd-reflowed + .nd-lines-reflow { display: block; }
+}
+.nd-lines-reflow p { margin: 0 0 .8em; line-height: 1.75; }
+.nd-ln { display: inline-block; min-width: 1.9em; margin: 0 .35em 0 .1em; padding: 0 .3em; border-radius: 5px; background: #eef2f8; color: var(--muted); font-size: .72em; font-weight: 700; line-height: 1.5; text-align: center; vertical-align: .12em; font-variant-numeric: tabular-nums; }
 
 /* Extra Practice · Grammar (2026-10-23): weekly units, hand-in window, records and the in-page file viewer. */
 .nd-list { list-style: none; margin: 8px 0; padding: 0; }

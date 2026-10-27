@@ -39,6 +39,10 @@
   .nd-n { min-width: 15pt !important; height: auto !important; padding: 0 !important; margin-right: 4pt !important; color: #111 !important; background: none !important; font-size: 9.3pt !important; }
   .nd-opt { gap: 5pt !important; border: 0 !important; padding: 1pt 0 !important; margin: 1pt 0 !important; background: none !important; break-inside: avoid; }
   .nd-letter { color: #111 !important; }
+  .nd-mc-inline .nd-opt { margin-right: 12pt !important; }
+  .nd-qgroup { margin: 3pt 0 !important; padding: 0 !important; border: 0 !important; background: none !important; break-inside: auto !important; }
+  .nd-qgroup > .nd-q, .nd-qgroup > .nd-block.nd-sheet { padding: 2pt 0 !important; }
+  .nd-q-bare { display: block !important; }
   .nd-gap { display: block !important; }
   .nd-gap-line { line-height: 1.45 !important; }
   .nd-print-value { color: #111 !important; white-space: pre-wrap; overflow-wrap: anywhere; }

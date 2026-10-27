@@ -72,24 +72,40 @@
   const text = (id) => (!paperMode() && typeof S.responses[id] === 'string' ? S.responses[id] : '');
   const off = () => (readOnly() || paperMode() ? ' disabled' : '');
   const plain = ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"';
+  const bare = (html) => String(html || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  // 12(i), 12 (ii): a part of question 12.
+  const subLabel = (q) => { const m = String(q.n || '').match(/^\s*(\d+)\s*\(([ivxl]+)\)\s*$/i); return m ? { base: m[1], roman: m[2].toLowerCase() } : null; };
+  // A part whose prompt only repeats its own label ("(i)" under 1(i)) shows the number alone.
+  const echoOnly = (q) => { const s = subLabel(q); return Boolean(s) && bare(q.prompt).toLowerCase() === `(${s.roman})`; };
+  // A short answer with one blank in its sentence is filled in the sentence, as on the paper.
+  const inSentence = (q) => q.kind === 'short' && !(q.rows > 1) && (String(q.prompt).match(/_{4,}/g) || []).length === 1;
 
   function questionHtml(q) {
     if (q.kind === 'mc') {
-      return `<fieldset class="nd-q" data-q="${q.id}"><legend>${number(q)}${q.prompt}</legend>${q.options.map((option, i) => {
+      // Short choices (T / F / NG, attitudes, letters, numbers) sit side by side.
+      const compact = q.options.every((option) => bare(option).length <= 18);
+      return `<fieldset class="nd-q nd-mc${compact ? ' nd-mc-inline' : ''}" data-q="${q.id}"><legend>${number(q)}${echoOnly(q) ? '' : q.prompt}</legend>${q.options.map((option, i) => {
         const letter = 'ABCDEFGH'.charAt(i);
         return `<label class="nd-opt"><input type="radio" name="q-${q.id}" value="${letter}"${!paperMode() && S.responses[q.id] === letter ? ' checked' : ''}${off()}><span class="nd-letter">${letter}</span><span>${option}</span></label>`;
       }).join('')}</fieldset>`;
     }
-    if (q.kind === 'gap') {
+    if (q.kind === 'gap' || inSentence(q)) {
       const input = `<input type="text" data-input="${q.id}" value="${N.esc(text(q.id))}" aria-label="Answer ${N.esc(q.n)}"${plain}${off()}>`;
       const parts = q.prompt.split(/_{4,}/);
       const line = parts.length > 1 ? parts[0] + input + parts.slice(1).join('') : q.prompt + ' ' + input;
-      return `<div class="nd-q nd-gap" data-q="${q.id}">${number(q)}<span class="nd-gap-line">${line}</span></div>`;
+      const midSentence = parts.length > 1 && bare(parts.slice(1).join('')).length > 1;
+      return `<div class="nd-q nd-gap${midSentence ? ' nd-gap-mid' : ''}" data-q="${q.id}">${number(q)}<span class="nd-gap-line">${line}${optionalTag(q)}</span></div>`;
     }
-    if (q.kind === 'short' || q.kind === 'long') {
-      const rows = q.rows || (q.kind === 'short' ? 2 : 10);
+    if (q.kind === 'short') {
+      // One line to start with; the box grows as the answer gets longer.
+      const field = `<textarea class="nd-grow" rows="${q.rows || 1}" data-input="${q.id}"${plain}${off()}>${N.esc(text(q.id))}</textarea>`;
+      if (echoOnly(q)) return `<div class="nd-q nd-q-bare" data-q="${q.id}">${number(q)}${field}</div>`;
+      return `<div class="nd-q" data-q="${q.id}"><p class="nd-prompt-line">${number(q)}${q.prompt}${optionalTag(q)}</p>${field}</div>`;
+    }
+    if (q.kind === 'long') {
+      const rows = q.rows || 10;
       const guide = q.wordGuide ? ` data-min="${q.wordGuide[0]}" data-max="${q.wordGuide[1]}"` : '';
-      return `<div class="nd-q" data-q="${q.id}"><p class="nd-prompt-line">${number(q)}${q.prompt}${optionalTag(q)}</p><textarea rows="${rows}" data-input="${q.id}"${plain}${off()}>${N.esc(text(q.id))}</textarea>${q.kind === 'long' ? `<p class="nd-count" data-count="${q.id}"${guide}></p>` : ''}</div>`;
+      return `<div class="nd-q" data-q="${q.id}"><p class="nd-prompt-line">${number(q)}${q.prompt}${optionalTag(q)}</p><textarea rows="${rows}" data-input="${q.id}"${plain}${off()}>${N.esc(text(q.id))}</textarea><p class="nd-count" data-count="${q.id}"${guide}></p></div>`;
     }
     if (q.kind === 'speak') return `<div class="nd-q nd-speak" data-q="${q.id}" data-speak="${q.id}"></div>`;
     if (q.kind === 'file') {
@@ -109,15 +125,43 @@
     return '';
   }
 
-  function render() {
-    const t = S.task;
+  // The parts of one question (4(i), 4(ii) …) share one box with the question they belong to, and a run of
+  // note-sheet blanks shares one box, as on the paper, instead of one box each.
+  function blocksHtml(t) {
     const groups = t.requireAny || [];
-    let blocks = '';
+    const parts = [];
     t.blocks.forEach((b, index) => {
       if (!S.submission && b.type === 'q' && b.kind === 'file') return; // One consistent hand-in panel for new work.
       const secondOfGroup = b.type === 'q' && groups.some((g) => g.indexOf(b.id) > 0);
-      blocks += (secondOfGroup ? '<p class="nd-or">— OR 或者 —</p>' : '') + blockHtml(b, index);
+      const sub = b.type === 'q' ? subLabel(b) : null;
+      const key = sub ? 'n' + sub.base : b.type === 'q' && b.kind === 'gap' && !secondOfGroup ? 'notes' : '';
+      parts.push({ b, key, html: (secondOfGroup ? '<p class="nd-or">— OR 或者 —</p>' : '') + blockHtml(b, index) });
     });
+    const sheet = (p) => p.b.type === 'html' && !p.b.title;
+    parts.forEach((p, i) => {
+      if (p.key || !sheet(p)) return;
+      const before = parts[i - 1], after = parts.slice(i + 1).find((x) => !sheet(x));
+      // A worked example or heading between two parts of the same question stays inside its box.
+      if (before && after && before.key && before.key === after.key && before.key !== 'notes') p.key = before.key;
+      // The question's own wording, directly above its parts, heads the box.
+      else if (parts[i + 1] && /^n\d+$/.test(parts[i + 1].key) && new RegExp(`^${parts[i + 1].key.slice(1)}\\b`).test(bare(p.b.html))) p.key = parts[i + 1].key;
+    });
+    let html = '';
+    for (let i = 0; i < parts.length;) {
+      let j = i + 1;
+      if (parts[i].key) while (j < parts.length && parts[j].key === parts[i].key) j += 1;
+      const run = parts.slice(i, j);
+      html += run.filter((p) => p.b.type === 'q').length > 1
+        ? `<div class="nd-qgroup${run[0].key === 'notes' ? ' nd-qgroup-notes' : ''}">${run.map((p) => p.html).join('')}</div>`
+        : run.map((p) => p.html).join('');
+      i = j;
+    }
+    return html;
+  }
+
+  function render() {
+    const t = S.task;
+    const blocks = blocksHtml(t);
     // Homework belongs to its class page, not to Practice & Mock: the header marks Classes, not Practice & Mock.
     if (t.group === 'homework') {
       document.querySelectorAll('.nd-nav a').forEach((a, i) => (i === 0 ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
@@ -143,6 +187,7 @@
       const field = Array.from(app.querySelectorAll('[data-q]')).find((node) => node.dataset.q === id);
       if (field) slot.append(field);
     });
+    app.querySelectorAll('.nd-qgroup').forEach((group) => { if (!group.querySelector('[data-q]')) group.replaceWith(...group.childNodes); });
     if (t.group === 'extra') {
       const key = 'niu-extra-folds:' + t.id;
       let saved = {};
@@ -166,7 +211,9 @@
     mountRecorders();
     mountAudio();
     mountPages();
+    mountPassages();
     if (S.submission) showFeedback();
+    growAll();
     updateBar();
   }
 
@@ -369,8 +416,20 @@
     el.classList.toggle('ok', Boolean(max) && count >= min && count <= max);
   }
 
+  function grow(box) {
+    // Folded away: sized when shown. Printing: the print copy replaces the box, and its screen size is kept.
+    if (!box.offsetParent || document.body.classList.contains('nd-printing') || window.matchMedia('print').matches) return;
+    box.style.height = 'auto';
+    box.style.height = box.scrollHeight + box.offsetHeight - box.clientHeight + 'px';
+  }
+  function growAll() { app.querySelectorAll('textarea.nd-grow').forEach(grow); }
+  let growTimer = 0;
+  window.addEventListener('resize', () => { clearTimeout(growTimer); growTimer = setTimeout(growAll, 150); });
+  app.addEventListener('toggle', growAll, true);
+
   app.addEventListener('input', (event) => {
     const input = event.target.closest('[data-input]');
+    if (input && input.classList.contains('nd-grow')) grow(input);
     if (!input || readOnly()) return;
     const id = input.dataset.input;
     if (input.value.trim()) S.responses[id] = input.value; else delete S.responses[id];
@@ -543,6 +602,81 @@
       setTimeout(() => { bar.hidden = true; }, 1200);
     }
   }
+
+  // ---------- reading passages on screen ----------
+  // A passage keeps the paper's lines: one <li> per printed line, numbered where the paper prints a number.
+  // Where the screen is wide enough every paper line stays on one screen line (the passage shrinks a little,
+  // never below 13px). On a narrower screen the lines join into paragraphs and each printed line number
+  // stays in the text as a small mark, so "line 42" can still be found. Printing always uses the paper lines.
+
+  const passages = [];
+
+  function reflowHtml(lines) {
+    let html = '';
+    lines.forEach((li, i) => {
+      if (i === 0 || li.classList.contains('nd-pstart')) html += (i ? '</p>' : '') + '<p>';
+      else if (!/\w-$/.test(lines[i - 1].textContent.trim())) html += ' ';
+      if (li.dataset.n) html += `<span class="nd-ln" aria-hidden="true">${N.esc(li.dataset.n)}</span>`;
+      html += li.innerHTML;
+    });
+    return html + '</p>';
+  }
+
+  function widestEm(p, px) {
+    p.list.classList.add('nd-measure-lines');
+    p.list.style.setProperty('--nd-measure-size', px + 'px');
+    const widest = Math.max(...p.lines.map((line) => {
+      const range = document.createRange();
+      range.selectNodeContents(line);
+      return range.getBoundingClientRect().width / px;
+    }));
+    p.list.classList.remove('nd-measure-lines');
+    p.list.style.removeProperty('--nd-measure-size');
+    return widest;
+  }
+
+  function layoutPassage(p) {
+    if (document.body.classList.contains('nd-printing') || window.matchMedia('print').matches) return;
+    const box = p.list.parentElement, css = getComputedStyle(box);
+    const room = box.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight) - parseFloat(getComputedStyle(p.list).paddingLeft);
+    if (!box.offsetParent || room <= 0) return; // folded away: laid out when opened
+    if (!p.em) {
+      const shown = p.list.classList.contains('nd-reflowed');
+      p.list.classList.remove('nd-reflowed');
+      p.em = widestEm(p, 14);
+      if (p.em > 0) p.em = Math.max(p.em, widestEm(p, Math.max(13, Math.min(16, room / p.em))));
+      p.list.classList.toggle('nd-reflowed', shown);
+      if (!(p.em > 0)) return;
+    }
+    const size = Math.min(16, (room * 0.985) / p.em);
+    const fit = size >= 13;
+    if (p.fit === fit && p.size === size) return;
+    p.fit = fit; p.size = size;
+    p.list.classList.toggle('nd-fit-screen', fit);
+    p.list.classList.toggle('nd-reflowed', !fit);
+    if (fit) p.list.style.setProperty('--nd-screen-size', size.toFixed(2) + 'px');
+    else p.list.style.removeProperty('--nd-screen-size');
+  }
+
+  function mountPassages() {
+    passages.splice(0).forEach((p) => p.observer.disconnect());
+    app.querySelectorAll('ol.nd-lines').forEach((list) => {
+      const lines = Array.from(list.children).filter((node) => node.tagName === 'LI');
+      if (!lines.length) return;
+      const flow = document.createElement('div');
+      flow.className = 'nd-lines-reflow';
+      flow.setAttribute('data-no-print', '');
+      flow.innerHTML = reflowHtml(lines);
+      list.after(flow);
+      const p = { list, lines, em: 0 };
+      p.observer = new ResizeObserver(() => layoutPassage(p));
+      p.observer.observe(list.parentElement);
+      passages.push(p);
+    });
+  }
+  const relayout = () => passages.forEach((p) => { p.fit = null; layoutPassage(p); });
+  document.addEventListener('niu:print-restored', relayout);
+  window.matchMedia('print').addEventListener('change', (event) => { if (!event.matches) { relayout(); growAll(); } });
 
   // ---------- private audio and page images ----------
 
