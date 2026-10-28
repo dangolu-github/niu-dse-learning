@@ -162,6 +162,15 @@ fieldset.nd-q > legend + * { clear: both; }
 .nd-qgroup > .nd-block.nd-rich { margin: 0; padding: 12px 0 4px; border: 0; border-radius: 0; background: none; }
 .nd-q-bare > .nd-n { min-width: 3.6em; }
 .nd-qgroup-notes > .nd-q { padding: 6px 0; border-top: 0; }
+/* Keep the parts of a question continuous on screen, including flow-chart arrows. */
+@media screen {
+  .nd-qgroup > .nd-q { border-top: 0; }
+  .nd-qgroup > .nd-q + .nd-block.nd-sheet { padding: 0 0 0 44px; }
+  .nd-qgroup > .nd-q + .nd-block.nd-sheet > p { margin: 0; }
+  .nd-qgroup > .nd-block.nd-sheet + .nd-gap { padding-top: 4px; }
+  .nd-qgroup:has(> .nd-gap + .nd-block.nd-sheet) .nd-gap-line { line-height: 1.8; }
+  .nd-qgroup:has(> .nd-gap + .nd-block.nd-sheet) .nd-gap input { width: min(calc(100% - 1em), 10em); }
+}
 .nd-q textarea:focus, .nd-gap input:focus, .nd-field input:focus, .nd-field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .nd-q :disabled { background: #f1f3f7; color: var(--ink); opacity: 1; -webkit-text-fill-color: var(--ink); }
 .nd-count { margin: 6px 0 0; color: var(--muted); font-size: 13px; text-align: right; }
