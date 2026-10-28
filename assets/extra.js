@@ -5,17 +5,23 @@
 (() => {
   const N = window.Niu, A = N.A, app = document.getElementById('app');
   const DRAFT = 'niu-grammar-draft';
-  const S = { grammar: null, grammarId: '', files: [], meta: {}, note: '', busy: false };
+  // pending: the upload ID of each page that has not been confirmed yet, so choosing the same page again
+  // after a failure is a retry of that upload and the course reuses the file it already saved.
+  const S = { grammar: null, grammarId: '', files: [], meta: {}, note: '', busy: false, pending: {} };
+  // One chosen file, named by what the browser knows about it.
+  const fileSlot = (file) => `${file.name}|${file.size}|${file.lastModified || 0}|${file.type || ''}`;
+  // A retry must send the same bytes, so the prepared blob of an unconfirmed page is kept for this page's life.
+  const prepared = new Map();
 
   const readDraft = () => {
     try {
       const d = JSON.parse(localStorage.getItem(DRAFT) || 'null');
-      if (d) { S.grammarId = d.grammarId || ''; S.files = d.files || []; S.meta = d.meta || {}; S.note = d.note || ''; }
+      if (d) { S.grammarId = d.grammarId || ''; S.files = d.files || []; S.meta = d.meta || {}; S.note = d.note || ''; S.pending = d.pending || {}; }
     } catch (_) { /* no draft */ }
     if (!S.grammarId) S.grammarId = N.newId('gram');
   };
-  const writeDraft = () => { try { localStorage.setItem(DRAFT, JSON.stringify({ grammarId: S.grammarId, files: S.files, meta: S.meta, note: S.note })); } catch (_) { /* private browser */ } };
-  const clearDraft = () => { S.grammarId = N.newId('gram'); S.files = []; S.meta = {}; S.note = ''; try { localStorage.removeItem(DRAFT); } catch (_) { /* nothing stored */ } };
+  const writeDraft = () => { try { localStorage.setItem(DRAFT, JSON.stringify({ grammarId: S.grammarId, files: S.files, meta: S.meta, note: S.note, pending: S.pending })); } catch (_) { /* private browser */ } };
+  const clearDraft = () => { S.grammarId = N.newId('gram'); S.files = []; S.meta = {}; S.note = ''; S.pending = {}; try { localStorage.removeItem(DRAFT); } catch (_) { /* nothing stored */ } };
 
   const remember = (fold, key) => {
     try { fold.open = localStorage.getItem(key) === 'true'; } catch (_) { /* keep closed */ }
@@ -113,30 +119,53 @@
     const max = (S.grammar && S.grammar.maxFiles) || 20;
     const bad = files.find((f) => !/^image\//.test(f.type) && f.type !== 'application/pdf' && !/\.(pdf|heic|heif|jpe?g|png|webp)$/i.test(f.name));
     if (bad) { say(`${bad.name} is not a photo or PDF. 只能上传照片或 PDF。`, 'error'); input.value = ''; return; }
-    if (S.files.length + files.length > max) { say(`Choose no more than ${max} files in one hand-in.`, 'error'); input.value = ''; return; }
+    // Retrying a part-finished selection sends its already-listed pages again. Those are the same pages,
+    // not extra ones, so they are not counted against the limit twice - otherwise a hand-in that filled
+    // the limit could never be retried.
+    const adding = files.filter((f) => {
+      const known = S.pending[fileSlot(f)];
+      return !known || S.files.indexOf(known) < 0;
+    }).length;
+    if (S.files.length + adding > max) { say(`Choose no more than ${max} files in one hand-in.`, 'error'); input.value = ''; return; }
     S.busy = true; input.disabled = true;
     const bar = app.querySelector('[data-hand-in-panel] .nd-progress'), fill = bar.querySelector('i');
     bar.hidden = false; fill.style.width = '5%';
+    // Each page's upload ID is released only when the whole selection has gone through: a page that
+    // arrived must keep its ID while a later page of the same selection is still failing, or the next
+    // press would ask for a second copy of a page that is already saved.
+    const done = [];
     try {
       for (let i = 0; i < files.length; i += 1) {
         say(`Sending ${i + 1} of ${files.length}… Keep this page open. 正在上传，请不要关闭页面。`);
-        const ready = await prepare(files[i]);
+        const slot = fileSlot(files[i]);
+        const ready = prepared.get(slot) || await prepare(files[i]);
+        prepared.set(slot, ready);
         if (ready.blob.size > 12 * 1024 * 1024) throw new Error(`${files[i].name} is larger than 12 MB. Take the photo again at a smaller size.`);
-        const fileId = N.newId('file');
+        // The same page sent again keeps its upload ID, so the course reuses its file instead of saving a
+        // second copy. An upload that failed never gives its ID up: an unknown outcome is exactly when a
+        // new ID would make that second copy.
+        const fileId = S.pending[slot] || N.newId('file');
+        if (S.pending[slot] !== fileId) { S.pending[slot] = fileId; writeDraft(); }
         const data = await N.toBase64(ready.blob), submissionOrigin = await N.origin();
         const result = await A.post('uploadFile', { taskId: 'grammar', itemId: 'work', fileId, type: ready.type, name: ready.name, kind: 'uploaded', seconds: 0, data, submissionOrigin });
-        S.files.push(fileId);
+        // A retried page comes back as the same file; it is listed once.
+        if (S.files.indexOf(fileId) < 0) S.files.push(fileId);
         S.meta[fileId] = { name: result.name || ready.name, bytes: result.bytes || ready.blob.size };
         writeDraft();
+        done.push(slot);
         fill.style.width = Math.round(((i + 1) / files.length) * 100) + '%';
       }
+      // Every page of this selection is listed and saved in the draft, so the IDs have done their work.
+      done.forEach((slot) => { delete S.pending[slot]; prepared.delete(slot); });
+      writeDraft();
       S.busy = false;
       redrawPanel();
       say(`Uploaded ${files.length} file${files.length === 1 ? '' : 's'}. Check the list, then press Hand in. 已上传，核对后点 Hand in。`, 'success');
     } catch (error) {
       S.busy = false;
       redrawPanel();
-      say((error && error.message) || 'The upload did not finish. Please try again.', 'error');
+      say(((error && error.message) || 'The upload did not finish.')
+        + ' Choose the same files and press again to finish this upload. 请再选同样的文件重试。', 'error');
     }
   }
 

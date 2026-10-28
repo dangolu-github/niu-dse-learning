@@ -156,7 +156,11 @@ window.NiuRecorder = (() => {
       if (recorder && recorder.state !== 'inactive') recorder.stop();
     }
 
-    async function save(blob, type, name, kind, seconds) {
+    // One take, one ID, for as long as it takes to save it. "Save this answer again" repeats the same take
+    // with the same takeId, so the course reuses the file it already made instead of keeping a second copy
+    // of the same answer; recording again, or choosing another audio file, is a new take with a new ID.
+    async function save(blob, type, name, kind, seconds, takeId) {
+      const take = takeId || N.newId('take');
       if (blob.size > MAX_BYTES) {
         st.mode = 'idle';
         note(`This audio is ${N.size(blob.size)}; the limit is 12 MB. Record a shorter answer, or save the file as m4a or mp3. 文件超过 12 MB，请缩短录音或改存为 m4a / mp3。`, true);
@@ -166,7 +170,7 @@ window.NiuRecorder = (() => {
       st.mode = 'uploading'; note('');
       draw();
       try {
-        const result = await o.upload({ blob, type, name, kind, seconds });
+        const result = await o.upload({ blob, type, name, kind, seconds, takeId: take });
         if (st.url) URL.revokeObjectURL(st.url);
         if (st.pending && st.pending.url) URL.revokeObjectURL(st.pending.url);
         st.pending = null;
@@ -176,7 +180,8 @@ window.NiuRecorder = (() => {
         o.onChange(st.value, result.meta);
       } catch (error) {
         if (st.pending && st.pending.url) URL.revokeObjectURL(st.pending.url);
-        st.pending = { blob, type, name, kind, seconds, url: URL.createObjectURL(blob) };
+        // The take and its ID are both kept, so the retry below is the same upload, not another one.
+        st.pending = { blob, type, name, kind, seconds, takeId: take, url: URL.createObjectURL(blob) };
         st.mode = 'idle';
         note(((error && error.message) || 'The answer could not be saved.') + ' Your audio is still here: press “Save this answer again”. 录音还在，请点“重新保存”。', true);
       }
@@ -213,7 +218,7 @@ window.NiuRecorder = (() => {
       else if (act === 'stop') stop();
       else if (act === 'cancel') { clearPrep(); asked += 1; st.mode = 'idle'; note(''); draw(); }
       else if (act === 'play') play();
-      else if (act === 'retry' && st.pending) save(st.pending.blob, st.pending.type, st.pending.name, st.pending.kind, st.pending.seconds);
+      else if (act === 'retry' && st.pending) save(st.pending.blob, st.pending.type, st.pending.name, st.pending.kind, st.pending.seconds, st.pending.takeId);
     });
     panel.addEventListener('change', (event) => {
       const input = event.target.closest('[data-file]');
