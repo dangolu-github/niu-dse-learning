@@ -22,6 +22,19 @@
   };
   const writeDraft = () => { try { localStorage.setItem(DRAFT, JSON.stringify({ grammarId: S.grammarId, files: S.files, meta: S.meta, note: S.note, pending: S.pending })); } catch (_) { /* private browser */ } };
   const clearDraft = () => { S.grammarId = N.newId('gram'); S.files = []; S.meta = {}; S.note = ''; S.pending = {}; try { localStorage.removeItem(DRAFT); } catch (_) { /* nothing stored */ } };
+  // A page's upload ID has to outlive this page, not just this moment in it: a first upload that starts
+  // with nothing in the draft is exactly the one that comes back as a second copy, because a reload loses
+  // the ID and the next attempt asks for a new one. So before anything is sent, the ID is read back out of
+  // the draft in storage - never out of S.pending, which would answer for storage and hide the very fault
+  // this guards. An ID that is already stored is enough even if a later write fails.
+  const storedPending = () => {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT) || 'null');
+      return (d && d.pending) || {};
+    } catch (_) { return null; }
+  };
+  const durablePending = (slot, fileId) => { const stored = storedPending(); return Boolean(stored && stored[slot] === fileId); };
+  const STORAGE_OFF = 'This browser is not saving data for this page, so no new copy of this file was sent. Please allow this site to save data, keep this page open, then choose the same files again. 浏览器没有保存本页数据，这个文件本次未上传。请允许本站保存数据，保持页面打开，再选同样的文件重试。';
 
   const remember = (fold, key) => {
     try { fold.open = localStorage.getItem(key) === 'true'; } catch (_) { /* keep closed */ }
@@ -146,6 +159,13 @@
         // new ID would make that second copy.
         const fileId = S.pending[slot] || N.newId('file');
         if (S.pending[slot] !== fileId) { S.pending[slot] = fileId; writeDraft(); }
+        if (!durablePending(slot, fileId)) {
+          // A write the browser refused earlier is tried again here, so allowing storage and choosing the
+          // same pages again records the ID this page is already holding instead of starting a second
+          // upload. The ID stays in memory either way: the retry is this same upload.
+          writeDraft();
+          if (!durablePending(slot, fileId)) throw new Error(STORAGE_OFF);
+        }
         const data = await N.toBase64(ready.blob), submissionOrigin = await N.origin();
         const result = await A.post('uploadFile', { taskId: 'grammar', itemId: 'work', fileId, type: ready.type, name: ready.name, kind: 'uploaded', seconds: 0, data, submissionOrigin });
         // A retried page comes back as the same file; it is listed once.

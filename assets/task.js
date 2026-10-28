@@ -33,6 +33,19 @@
       localStorage.setItem(storeKey(), JSON.stringify({ saveId: S.saveId, submissionId: S.submissionId, responses: S.responses, files: S.files, clientUpdatedAt: S.clientUpdatedAt, secondsUsed: S.secondsUsed, audioDone: S.audioDone, uploadErrors: S.uploadErrors, pending: S.pending }));
     } catch (error) { /* private mode: the server copy still saves */ }
   }
+  // An upload's ID has to outlive this page, not just this moment in it: a first upload that starts with
+  // nothing written down on the device is exactly the one that comes back as a second copy, because a
+  // reload loses the ID and the next attempt asks for a new one. So before anything is sent, the ID is
+  // read back out of the device's own storage - never out of S.pending, which would answer for storage and
+  // hide the very fault this guards. An ID that is already stored is enough even if a later write fails.
+  function storedPending() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storeKey()) || 'null');
+      return (saved && saved.pending) || {};
+    } catch (error) { return null; }
+  }
+  const durablePending = (slot, fileId) => { const stored = storedPending(); return Boolean(stored && stored[slot] === fileId); };
+  const STORAGE_OFF = 'This browser is not saving data for this page, so no new copy of this file was sent. Please allow this site to save data, keep this page open, then send the same file or recording again. 浏览器没有保存本页数据，这个文件本次未上传。请允许本站保存数据，保持页面打开，然后重新发送同一个文件或录音。';
 
   async function load() {
     const data = await A.request('getTask', { taskId });
@@ -501,6 +514,13 @@
     const slot = slotKey ? `${itemId}|${slotKey}` : '';
     const fileId = (slot && S.pending[slot]) || N.newId('file');
     if (slot && S.pending[slot] !== fileId) { S.pending[slot] = fileId; writeLocal(); }
+    if (slot && !durablePending(slot, fileId)) {
+      // A write the browser refused earlier is tried again here, so allowing storage and pressing send
+      // again records the ID this page is already holding instead of starting a second upload. The ID,
+      // the take and its sound stay in memory either way: the retry is this same upload.
+      writeLocal();
+      if (!durablePending(slot, fileId)) throw new Error(STORAGE_OFF);
+    }
     S.uploads += 1;
     try {
       const data = await N.toBase64(blob), submissionOrigin = await N.origin();
