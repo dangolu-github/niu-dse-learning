@@ -144,13 +144,18 @@
     return '';
   }
 
-  // Reading tasks (Paper 1): the texts go in a left pane and the questions in a right pane, each scrolling on
-  // its own, so the learner can look back at the text while answering (teacher rule, 2026-10-29). Phones stack
-  // the panes, texts on top. The texts are the titled blocks before the first question; they never fold.
+  // Reading tasks: the texts go in a left pane and the questions in a right pane, each scrolling on its own, so
+  // the learner can look back at the text while answering (teacher rule, 2026-10-29). Phones stack the panes,
+  // texts on top. The texts are the titled blocks before the first question: in Paper 1 all of them, in Paper 3
+  // Part B the Data File pages from the first one on, in Paper 4 the article and its picture. They never fold.
   function readingTexts(t) {
-    if (t.paper !== 'P1') return [];
     const firstQ = t.blocks.findIndex((b) => b.type === 'q');
-    return t.blocks.map((b, i) => (b.type === 'html' && b.title && (firstQ < 0 || i < firstQ) ? i : -1)).filter((i) => i >= 0);
+    const titled = (b) => (b.type === 'html' && b.title) || (t.paper !== 'P1' && b.type === 'pages' && b.label);
+    const start = t.paper === 'P1' ? 0
+      : t.paper === 'P3' || t.paper === 'P4' ? t.blocks.findIndex((b) => b.type === 'html' && /^(Data File|Article)\b/.test(b.title || ''))
+      : -1;
+    if (start < 0) return [];
+    return t.blocks.map((b, i) => (i >= start && (firstQ < 0 || i < firstQ) && titled(b) ? i : -1)).filter((i) => i >= 0);
   }
 
   // The parts of one question (4(i), 4(ii) …) share one box with the question they belong to, and a run of
@@ -159,7 +164,11 @@
     const groups = t.requireAny || [];
     const parts = [];
     t.blocks.forEach((b, index) => {
-      if (texts.includes(index)) return; // Drawn in the texts pane.
+      if (texts.includes(index)) {
+        // Drawn in the texts pane. Print puts the texts back here, in the paper's order (print.js).
+        if (index === texts[0]) parts.push({ b, key: '', html: '<div data-text-slot hidden></div>' });
+        return;
+      }
       if (!S.submission && b.type === 'q' && b.kind === 'file') return; // One consistent hand-in panel for new work.
       const secondOfGroup = b.type === 'q' && groups.some((g) => g.indexOf(b.id) > 0);
       const sub = b.type === 'q' ? subLabel(b) : null;
@@ -204,7 +213,7 @@
     const work = `<div data-top></div>
       <div data-blocks>${blocks}</div>
       <div data-handin></div><div class="nd-submit" data-submit></div>`;
-    const textsHtml = texts.map((i) => `<details class="nd-block nd-doc" open data-text><summary>${N.esc(t.blocks[i].title)}</summary><div class="nd-rich nd-doc-body">${t.blocks[i].html}</div></details>`).join('');
+    const textsHtml = texts.map((i) => blockHtml(Object.assign({}, t.blocks[i], { open: true }), i).replace(/^<details /, '<details data-text ')).join('');
     app.innerHTML = `
       <p class="nd-back">${back}</p>
       <p class="nd-kicker">${N.esc(t.group === 'extra' ? 'Extra Practice · Listening' : t.paperLabel)}${t.source ? ' · ' + N.esc(t.source) : ''}</p>

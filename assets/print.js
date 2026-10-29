@@ -11,6 +11,14 @@
     state = { details: [], controls: [], added: [], classes: [], labels: [], lineFits: [], blank: Boolean(options.blank) };
     document.body.classList.add('nd-printing');
     document.body.classList.toggle('nd-print-blank', state.blank);
+    // A reading task's texts sit in their own pane on screen; on paper they go back to their place in the task,
+    // after its instructions (task.js leaves a slot there).
+    const slot = app.querySelector('[data-text-slot]');
+    const texts = app.querySelector('.nd-split-texts');
+    if (slot && texts) {
+      slot.after(texts);
+      state.texts = texts;
+    }
     app.querySelectorAll('details').forEach((node) => {
       state.details.push([node, node.open]);
       node.open = true;
@@ -135,6 +143,8 @@
     previous.classes.forEach(([node, name]) => node.classList.remove(name));
     previous.lineFits.forEach((list) => { list.classList.remove('nd-fit-lines'); list.style.removeProperty('--nd-line-em'); });
     previous.details.forEach(([node, open]) => { node.open = open; });
+    const split = document.querySelector('.nd-split');
+    if (previous.texts && split) split.prepend(previous.texts);
     document.body.classList.remove('nd-printing', 'nd-print-blank');
     document.dispatchEvent(new CustomEvent('niu:print-restored'));
   }
