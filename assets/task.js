@@ -144,12 +144,22 @@
     return '';
   }
 
+  // Reading tasks (Paper 1): the texts go in a left pane and the questions in a right pane, each scrolling on
+  // its own, so the learner can look back at the text while answering (teacher rule, 2026-10-29). Phones stack
+  // the panes, texts on top. The texts are the titled blocks before the first question; they never fold.
+  function readingTexts(t) {
+    if (t.paper !== 'P1') return [];
+    const firstQ = t.blocks.findIndex((b) => b.type === 'q');
+    return t.blocks.map((b, i) => (b.type === 'html' && b.title && (firstQ < 0 || i < firstQ) ? i : -1)).filter((i) => i >= 0);
+  }
+
   // The parts of one question (4(i), 4(ii) …) share one box with the question they belong to, and a run of
   // note-sheet blanks shares one box, as on the paper, instead of one box each.
-  function blocksHtml(t) {
+  function blocksHtml(t, texts) {
     const groups = t.requireAny || [];
     const parts = [];
     t.blocks.forEach((b, index) => {
+      if (texts.includes(index)) return; // Drawn in the texts pane.
       if (!S.submission && b.type === 'q' && b.kind === 'file') return; // One consistent hand-in panel for new work.
       const secondOfGroup = b.type === 'q' && groups.some((g) => g.indexOf(b.id) > 0);
       const sub = b.type === 'q' ? subLabel(b) : null;
@@ -180,7 +190,8 @@
 
   function render() {
     const t = S.task;
-    const blocks = blocksHtml(t);
+    const texts = readingTexts(t);
+    const blocks = blocksHtml(t, texts);
     // Homework belongs to its class page, not to Practice & Mock: the header marks Classes, not Practice & Mock.
     if (t.group === 'homework') {
       document.querySelectorAll('.nd-nav a').forEach((a, i) => (i === 0 ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
@@ -190,14 +201,18 @@
       t.group === 'extra' ? `<a href="${N.root}extra-practice/">← Extra Practice</a>`
         : t.group !== 'homework' ? `<a href="${N.root}practice/">← Practice &amp; Mock</a>` : t.classId ? '' : `<a href="${N.root}">← Classes</a>`
     ].filter(Boolean).join(' · ');
+    const work = `<div data-top></div>
+      <div data-blocks>${blocks}</div>
+      <div data-handin></div><div class="nd-submit" data-submit></div>`;
+    const textsHtml = texts.map((i) => `<details class="nd-block nd-doc" open data-text><summary>${N.esc(t.blocks[i].title)}</summary><div class="nd-rich nd-doc-body">${t.blocks[i].html}</div></details>`).join('');
     app.innerHTML = `
       <p class="nd-back">${back}</p>
       <p class="nd-kicker">${N.esc(t.group === 'extra' ? 'Extra Practice · Listening' : t.paperLabel)}${t.source ? ' · ' + N.esc(t.source) : ''}</p>
       <h1>${N.esc(t.label)}</h1>
       <div class="nd-taskbar"><span data-time></span><span data-progress></span><span class="grow"></span><span data-status role="status"></span><button class="nd-linkbtn" type="button" data-print="blank">Print questions / PDF</button>${S.submission ? '<button class="nd-linkbtn" type="button" data-print="review">Print my work / PDF</button>' : ''}</div>
-      <div data-top></div>
-      <div data-blocks>${blocks}</div>
-      <div data-handin></div><div class="nd-submit" data-submit></div>`;
+      ${texts.length ? `<div class="nd-split"><section class="nd-split-pane nd-split-texts" aria-label="Texts 文章">${textsHtml}</section><div class="nd-split-pane nd-split-questions">${work}</div></div>` : work}`;
+    document.body.classList.toggle('nd-split-page', texts.length > 0);
+    app.querySelectorAll('[data-text]').forEach((fold) => fold.addEventListener('toggle', () => { if (!fold.open) fold.open = true; }));
     app.classList.toggle('nd-paper-mode', paperMode());
     app.classList.toggle('nd-extra-task', t.group === 'extra');
     // Native question tables retain their column relationships and use the standard answer controls.
