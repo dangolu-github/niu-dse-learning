@@ -1,0 +1,85 @@
+/* Checked work 批改展示 (2026-11-04). Only what this page adds: the marks inside an answer, and the
+   spacing that separates one question from the next. No card, no frame and no rule between questions, so
+   the page reads as one piece of work. The panes, pills, rich text and taskbar come from portal.css. */
+
+.nr-body { max-width: 72ch; }
+.nr-item { margin: 0 0 clamp(18px, 2.4vw, 30px); }
+.nr-item:last-child { margin-bottom: 8px; }
+.nr-prompt { margin: 0 0 8px; font-weight: 650; }
+.nr-n { display: inline-block; min-width: 2.4em; font-weight: 800; color: var(--accent); }
+.nr-options { margin: 0 0 10px; padding-left: 2.6em; color: var(--muted); }
+.nr-options li { margin: 2px 0; }
+.nr-material { margin: 0 0 clamp(14px, 2vw, 24px); }
+
+/* The learner's own answer: never reflowed, never retyped, with the paper's own line breaks kept. */
+.nr-answer { margin: 0 0 8px; }
+.nr-pre { white-space: pre-wrap; overflow-wrap: break-word; line-height: 1.75; }
+
+/* A short answer: the answer as written in pale red, the right answer in pale green brackets beside it. */
+.nr-del { background: var(--bad-soft); color: var(--bad); text-decoration: line-through; text-decoration-thickness: 1px; padding: 0 .1em; border-radius: 3px; }
+.nr-ins { background: var(--good-soft); color: var(--good); text-decoration: none; font-weight: 650; padding: 0 .1em; border-radius: 3px; }
+
+/* Writing and speaking: the crossing-out is grey and quiet, the correction is the red word to learn. No
+   block of colour behind either one, so a paragraph with many corrections still reads as a paragraph. */
+.nr-del-w { background: none; color: #6b7280; text-decoration: line-through; text-decoration-color: #9aa3b2; padding: 0; border-radius: 0; }
+.nr-ins-w { background: none; color: #c01919; font-weight: 700; padding: 0; border-radius: 0; }
+
+/* A fact added beside the learner's own words, which stay as they are. */
+.nr-anno { color: var(--accent); font-size: .95em; }
+.nr-anno::before { content: '· '; }
+/* A few seconds of the recording that could not be made out. Not a mistake, so not marked as one. */
+.nr-unclear { color: var(--muted); }
+
+.nr-verdict { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font-size: 14px; font-weight: 750; color: var(--muted); }
+.nr-verdict.good { color: var(--good); }
+.nr-verdict.bad { color: var(--bad); }
+.nr-verdict.warn { color: var(--warn); }
+.nr-score { font-weight: 800; color: var(--ink); }
+/* The mark for the whole piece, in the page and on the paper. No frame and no card: one line of figures. */
+.nr-score-line { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; margin: 0 0 clamp(14px, 2vw, 22px); }
+.nr-total { font-size: 15px; }
+.nr-total b { font-size: 17px; }
+.nr-parts { font-size: 14px; color: var(--muted); }
+.nr-note { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+
+.nr-doc { margin: 0 0 14px; }
+.nr-doc > summary { font-weight: 750; cursor: default; list-style: none; padding: 6px 0; }
+.nr-doc > summary::-webkit-details-marker { display: none; }
+.nr-audio, .nr-pages { margin: 0 0 14px; }
+.nr-audio audio { width: 100%; max-width: 640px; margin-top: 4px; }
+.nr-pages img { display: block; width: 100%; max-width: 860px; margin: 0 auto 10px; }
+
+
+/* The checked page has flat reading panes; the source forum keeps its genuine table borders. */
+.nd-split-pane { border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+
+/* Narrow and short windows: the panes already stack and scroll from portal.css; the answer keeps its
+   reading width and nothing is scaled down to fit. */
+@media screen and (max-width: 640px) {
+  .nr-n { min-width: 2em; }
+  .nr-options { padding-left: 1.8em; }
+}
+@media screen and (max-height: 500px) {
+  .nr-item { margin-bottom: 14px; }
+}
+.nd-split-questions .nr-body, .nd-split-questions .nr-item { max-width: none; }
+
+/* Print: all of the work, none of the controls. The brackets a short answer already carries are printed as
+   they are, and a writing correction stays red on paper, which is what it is read by. */
+@media print {
+  .nr-item { break-inside: avoid; }
+  .nr-answer, .nr-prompt { break-inside: avoid; }
+  .nr-del { background: none !important; color: #444 !important; text-decoration: line-through !important; }
+  .nr-ins { background: none !important; color: #c01919 !important; font-weight: 700 !important; }
+  .nr-del-w { color: #666 !important; }
+  .nr-ins-w { color: #c01919 !important; }
+  .nr-anno { color: #000 !important; }
+  .nr-unclear { color: #555 !important; }
+  .nr-doc > summary { padding: 0; }
+  .nr-body, .nr-item { max-width: none; }
+  /* The toolbar holds the print button and the hand-in time; the paper keeps the title, the mark and the
+     work. The shared print rules already hide the toolbar, so the mark sits outside it. */
+  .nd-taskbar { display: none !important; }
+  .nr-score-line { display: flex !important; margin: 0 0 6pt !important; }
+  .nr-total, .nr-parts { color: #111 !important; }
+}
