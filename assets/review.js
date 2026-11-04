@@ -10,10 +10,20 @@
 // The teacher's own preview of this page loads this same file against the same action name, so what she
 // reads before release is what the learner reads after it. Only the saved version behind it differs, and
 // her page says so in its own strip.
+//
+// There are two ways this renderer is used, and one renderer (2026-11-04):
+//   · its own page — review/, and the owner's preview of it — asks the course for the projection and draws
+//     it. That is what happens unless the page says otherwise.
+//   · the ordinary task page, and the owner's Student review of it, already receive the projection with
+//     their own payload for a hand-in released as marks only, so they call NiuReview.mount with it and
+//     nothing is asked for a second time. Those pages set <body data-review-boot="off">: this file is then
+//     only a library there — it draws nothing, loads no stylesheet and attaches no handler of its own,
+//     so every other hand-in on the task page keeps exactly the page and the handlers it had.
 (() => {
   const N = window.Niu, A = N.A, app = document.getElementById('app');
   const params = new URLSearchParams(location.search);
   const submissionId = params.get('submission') || (window.NiuReviewSubmission || '');
+  const autoBoot = document.body.dataset.reviewBoot !== 'off';
 
   // The learner's own wording for a verdict, exactly as the task page's result already says it.
   const VERDICTS = {
@@ -125,7 +135,7 @@
     return t.blocks.map((b, i) => (i >= start && (firstQ < 0 || i < firstQ) && titled(b) ? i : -1)).filter((i) => i >= 0);
   }
 
-  function render(view) {
+  function render(view, options) {
     const t = view.task, byId = {};
     (view.items || []).forEach((i) => { byId[i.id] = i; });
     document.title = t.label + ' · Checked work · Niu · DSE English';
@@ -156,8 +166,14 @@
       ? '<span>Part of this hand-in is still being checked. 部分题目还在批改中。</span>' : '';
     const bar = `<div class="nd-taskbar"><span>Handed in 提交 ${N.esc(N.when(view.submittedAt))}</span>${pending}<span class="grow"></span>
       <button class="nd-linkbtn" type="button" data-print-review>Print 打印 / PDF</button></div>`;
+    // Drawn on its own page, the way back is the task this work belongs to. Drawn inside that task page,
+    // the host supplies the links it uses itself: a link back to the page the learner is already on would
+    // send them in a circle, and a redirect between the two pages would loop.
+    const back = options && options.backHtml != null
+      ? String(options.backHtml)
+      : `<a href="${N.root}practice/task/?id=${encodeURIComponent(t.id)}">← ${N.esc(t.label)}</a>`;
     app.innerHTML = `
-      <p class="nd-back"><a href="${N.root}practice/task/?id=${encodeURIComponent(t.id)}">← ${N.esc(t.label)}</a></p>
+      ${back ? `<p class="nd-back">${back}</p>` : ''}
       <p class="nd-kicker">Checked work 批改展示${t.paperLabel ? ' · ' + N.esc(t.paperLabel) : ''}</p>
       <h1>${N.esc(t.label)}</h1>
       ${waiting}${bar}${total}
@@ -201,26 +217,60 @@
     }
   }
 
-  app.addEventListener('click', (event) => {
-    const media = event.target.closest('[data-load-media]');
-    if (media) { playMedia(media.closest('[data-media]')); return; }
-    const pages = event.target.closest('[data-load-pages]');
-    if (pages) { showPages(pages.closest('[data-pages]')); return; }
-    // The learner site's own print path: it opens every fold, waits for the pictures and puts the page
-    // back as it was afterwards. Printing reads the page and changes nothing that is stored.
-    if (event.target.closest('[data-print-review]')) {
-      if (window.NiuPrint) window.NiuPrint.print().catch((error) => window.alert(error.message));
-      else window.print();
-    }
-  });
+  // These belong to the page this renderer has drawn, not to the file. Where it is only held in reserve,
+  // a press on the task page's own recording or page image must reach that page's handlers and no others,
+  // so nothing is listening until something has actually been drawn here. Attached once either way.
+  let listening = false;
+  function listen() {
+    if (listening) return;
+    listening = true;
+    app.addEventListener('click', (event) => {
+      const media = event.target.closest('[data-load-media]');
+      if (media) { playMedia(media.closest('[data-media]')); return; }
+      const pages = event.target.closest('[data-load-pages]');
+      if (pages) { showPages(pages.closest('[data-pages]')); return; }
+      // The learner site's own print path: it opens every fold, waits for the pictures and puts the page
+      // back as it was afterwards. Printing reads the page and changes nothing that is stored.
+      if (event.target.closest('[data-print-review]')) {
+        if (window.NiuPrint) window.NiuPrint.print().catch((error) => window.alert(error.message));
+        else window.print();
+      }
+    });
+  }
 
-  (async () => {
+  // review.css is this renderer's own sheet. A page that only holds the renderer in reserve is not
+  // restyled by it: the sheet is added when something is actually drawn, once, and only if the page has
+  // not loaded it already (its own page and the owner's preview both do).
+  function styles() {
+    const loaded = Array.from(document.querySelectorAll('link[rel=stylesheet]'))
+      .some((link) => String(link.getAttribute('href') || '').indexOf('assets/review.css') >= 0);
+    if (loaded) return Promise.resolve();
+    return new Promise((resolve) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = `${N.root}assets/review.css?v=niu-review-1`;
+      link.addEventListener('load', resolve, { once: true });
+      link.addEventListener('error', resolve, { once: true });
+      document.head.appendChild(link);
+    });
+  }
+
+  // One finished projection, already in the host page's hands, drawn here. Nothing is requested: the
+  // payload is what the host was given. `options.backHtml` is the host's own way back.
+  async function mount(view, options) {
+    await styles();
+    listen();
+    render(view, options || {});
+  }
+  window.NiuReview = { mount: mount };
+
+  if (autoBoot) (async () => {
     try {
       await A.ready;
       if (!submissionId) throw new Error('This page needs the hand-in it belongs to.');
       const view = await A.request('getReviewedDisplay', { submissionId });
       N.previewNote(view.env || '');
-      render(view);
+      await mount(view);
     } catch (error) { N.fail(app, error); }
   })();
 })();

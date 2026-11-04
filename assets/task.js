@@ -80,6 +80,17 @@
         }
       }
     }
+    // One of the hand-ins the teacher released as marks only (ReviewDisplay.gs). The course sends the
+    // finished checked-work projection with this payload, so the shared renderer draws it here from what
+    // is already in hand: no second request, no redirect to the checked-work page and back, and this
+    // page's own feedback panel — its corrections, its Why comments, its models — is not drawn at all.
+    // The way back is this page's own links, so the renderer's link to this task cannot point here.
+    const checked = S.submission && S.submission.result && S.submission.result.checkedDisplay;
+    if (checked && window.NiuReview) {
+      markSection();
+      await window.NiuReview.mount(Object.assign({}, checked, { task: S.task }), { backHtml: backLinks() });
+      return;
+    }
     render();
     if (S.dirty && !readOnly()) schedule(800);
   }
@@ -197,19 +208,29 @@
     return html;
   }
 
-  function render() {
+  // Where this task is reached from. Read by this page's own header and handed to the shared checked-work
+  // renderer when that draws in place of it, so either page offers the same way back.
+  function backLinks() {
     const t = S.task;
-    const texts = readingTexts(t);
-    const blocks = blocksHtml(t, texts);
-    // Homework belongs to its class page, not to Practice & Mock: the header marks Classes, not Practice & Mock.
-    if (t.group === 'homework') {
-      document.querySelectorAll('.nd-nav a').forEach((a, i) => (i === 0 ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
-    }
-    const back = [
+    return [
       t.classId ? `<a href="${N.root}class/?id=${encodeURIComponent(t.classId)}">← Class</a>` : '',
       t.group === 'extra' ? `<a href="${N.root}extra-practice/">← Extra Practice</a>`
         : t.group !== 'homework' ? `<a href="${N.root}practice/">← Practice &amp; Mock</a>` : t.classId ? '' : `<a href="${N.root}">← Classes</a>`
     ].filter(Boolean).join(' · ');
+  }
+
+  // Homework belongs to its class page, not to Practice & Mock: the header marks Classes, not Practice & Mock.
+  function markSection() {
+    if (S.task.group !== 'homework') return;
+    document.querySelectorAll('.nd-nav a').forEach((a, i) => (i === 0 ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  }
+
+  function render() {
+    const t = S.task;
+    const texts = readingTexts(t);
+    const blocks = blocksHtml(t, texts);
+    markSection();
+    const back = backLinks();
     const work = `<div data-top></div>
       <div data-blocks>${blocks}</div>
       <div data-handin></div><div class="nd-submit" data-submit></div>`;
