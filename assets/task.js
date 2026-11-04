@@ -279,6 +279,12 @@
       if (r.released && (r.outOf !== '' || r.overall)) {
         html += `<div class="nd-result"><h2>Feedback 批改结果</h2>${r.outOf !== '' ? `<p class="nd-score">${N.esc(r.score)} / ${N.esc(r.outOf)}</p>` : ''}${r.overall ? `<p class="nd-pre">${N.esc(r.overall)}</p>` : ''}</div>`;
       }
+      // The checked-work page for this hand-in (2026-11-04): the same corrections, shown inside the answer
+      // as it was written. Offered once the feedback is released and something has actually been checked,
+      // so the link never leads to a waiting page.
+      if (r.released && (r.items || []).some((i) => i.verdict && i.verdict !== 'pending')) {
+        html += `<p class="nd-back" data-no-print><a href="${N.root}review/?submission=${encodeURIComponent(S.submission.submissionId)}">Checked work 批改展示 →</a></p>`;
+      }
       if (S.submission.transcriptHtml) html += `<details class="nd-fold" data-print-feedback><summary><small>Transcript</small>Recording transcript 录音稿</summary><div class="nd-fold-body nd-rich">${S.submission.transcriptHtml}</div></details>`;
       top.innerHTML = html;
     } else if (S.blocked) top.innerHTML = `<p class="nd-banner warn">${N.esc(S.blocked)}</p>`;
