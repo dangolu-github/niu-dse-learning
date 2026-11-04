@@ -310,7 +310,9 @@
       if (i.comment) extra.push(`<p class="nd-pre"><span class="label">Why 错因:</span> ${N.esc(i.comment)}</p>`);
       if (i.key) extra.push(`<p><span class="label">Answer 答案:</span> ${N.esc(i.key)}</p>`);
       if (i.accept) extra.push(`<p><span class="label">Answer 答案:</span> ${i.accept.map(N.esc).join(' &nbsp;/&nbsp; ')}</p>`);
-      if (i.explain) extra.push(`<p>${i.explain}</p>`);
+      // The explanation arrives only while the task's Show explanations switch is on; off, there is no field
+      // here at all, so nothing of it is in the page source, the DOM or the printed copy. It starts folded.
+      if (i.explain) extra.push(`<details class="nd-explain"><summary>Explanation 解析</summary><div class="nd-rich">${i.explain}</div></details>`);
       if (i.model) extra.push(`<details><summary>Model answer 参考答案</summary><div class="nd-rich">${i.model}</div></details>`);
       box.insertAdjacentHTML('beforeend', `<div class="nd-verdict ${i.verdict}" data-print-feedback><p class="label">${labels[i.verdict]}</p>${extra.join('')}</div>`);
     });
