@@ -195,9 +195,13 @@ fieldset.nd-q > legend + * { clear: both; }
 .nd-drop strong { font-size: 15px; }
 .nd-drop span { color: var(--muted); font-size: 13px; }
 .nd-files { display: grid; gap: 4px; margin: 0 0 10px; padding: 0; list-style: none; font-size: 14px; }
-.nd-files li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; background: #f1f4f9; }
+/* A file row carries its own actions (View, move, Remove). On a narrow phone they go under the file name
+   instead of pushing the row past the screen. */
+.nd-files li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; padding: 6px 10px; border-radius: 8px; background: #f1f4f9; }
 .nd-files li span:first-child { overflow-wrap: anywhere; }
+.nd-file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-left: auto; }
 .nd-linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 700; cursor: pointer; text-decoration: underline; }
+.nd-linkbtn[disabled] { color: var(--muted); text-decoration: none; cursor: default; }
 
 /* Feedback */
 .nd-verdict { margin: 12px 0 0; padding: 10px 14px; border-radius: 10px; background: #f4f7fc; font-size: 15px; }

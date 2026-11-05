@@ -7,7 +7,10 @@
   const DRAFT = 'niu-grammar-draft';
   // pending: the upload ID of each page that has not been confirmed yet, so choosing the same page again
   // after a failure is a retry of that upload and the course reuses the file it already saved.
-  const S = { grammar: null, grammarId: '', files: [], meta: {}, note: '', busy: false, pending: {} };
+  // left: the pages of the last choice that are still not in the list below, kept in the draft so that
+  // closing the page cannot turn a part-finished choice into a hand-in that looks complete.
+  // partialOk: the learner has been told and has chosen to hand in only what is listed.
+  const S = { grammar: null, grammarId: '', files: [], meta: {}, note: '', busy: false, pending: {}, left: [], partialOk: false };
   // One chosen file, named by what the browser knows about it.
   const fileSlot = (file) => `${file.name}|${file.size}|${file.lastModified || 0}|${file.type || ''}`;
   // A retry must send the same bytes, so the prepared blob of an unconfirmed page is kept for this page's life.
@@ -16,12 +19,12 @@
   const readDraft = () => {
     try {
       const d = JSON.parse(localStorage.getItem(DRAFT) || 'null');
-      if (d) { S.grammarId = d.grammarId || ''; S.files = d.files || []; S.meta = d.meta || {}; S.note = d.note || ''; S.pending = d.pending || {}; }
+      if (d) { S.grammarId = d.grammarId || ''; S.files = d.files || []; S.meta = d.meta || {}; S.note = d.note || ''; S.pending = d.pending || {}; S.left = d.left || []; S.partialOk = Boolean(d.partialOk); }
     } catch (_) { /* no draft */ }
     if (!S.grammarId) S.grammarId = N.newId('gram');
   };
-  const writeDraft = () => { try { localStorage.setItem(DRAFT, JSON.stringify({ grammarId: S.grammarId, files: S.files, meta: S.meta, note: S.note, pending: S.pending })); } catch (_) { /* private browser */ } };
-  const clearDraft = () => { S.grammarId = N.newId('gram'); S.files = []; S.meta = {}; S.note = ''; S.pending = {}; try { localStorage.removeItem(DRAFT); } catch (_) { /* nothing stored */ } };
+  const writeDraft = () => { try { localStorage.setItem(DRAFT, JSON.stringify({ grammarId: S.grammarId, files: S.files, meta: S.meta, note: S.note, pending: S.pending, left: S.left, partialOk: S.partialOk })); } catch (_) { /* private browser */ } };
+  const clearDraft = () => { S.grammarId = N.newId('gram'); S.files = []; S.meta = {}; S.note = ''; S.pending = {}; S.left = []; S.partialOk = false; try { localStorage.removeItem(DRAFT); } catch (_) { /* nothing stored */ } };
   // A page's upload ID has to outlive this page, not just this moment in it: a first upload that starts
   // with nothing in the draft is exactly the one that comes back as a second copy, because a reload loses
   // the ID and the next attempt asks for a new one. So before anything is sent, the ID is read back out of
@@ -66,35 +69,51 @@
       const checked = r.review && r.review.files.length;
       const files = checked ? r.review.files : r.files;
       return `<li><div class="nd-record-head"><strong>${N.esc(N.when(r.at))}</strong>${r.note ? ' · ' + N.esc(r.note) : ''} ${r.review ? '<span class="nd-pill good">Checked 已批改</span>' : '<span class="nd-pill warn">Waiting 待批改</span>'}</div>
-        ${checked ? `<p class="nd-note">老师批改后的版本（${N.esc(N.when(r.review.at))}）：</p>` : ''}
+        ${checked ? `<p class="nd-note">老师批改后的版本（${N.esc(N.when(r.review.filesAt || r.review.at))}）：</p>` : ''}
         <ul class="nd-files">${files.map((f) => `<li>${fileLine(f)}</li>`).join('')}</ul>
         ${r.review && r.review.comment ? `<p class="nd-note">老师：${N.esc(r.review.comment)}</p>` : ''}</li>`;
     }).join('')}</ul>`;
   }
 
   function handInHtml() {
+    const last = S.files.length - 1;
     const list = S.files.length ? `<ul class="nd-files" data-draft-files>${S.files.map((id, i) => {
       const m = S.meta[id] || {};
-      return `<li><span>${i + 1}. ✓ ${N.esc(m.name || 'File')}${m.bytes ? ' · ' + N.size(m.bytes) : ''}</span><button class="nd-linkbtn" type="button" data-draft-remove="${N.esc(id)}">Remove</button></li>`;
+      return `<li><span>${i + 1}. ✓ ${N.esc(m.name || 'File')}${m.bytes ? ' · ' + N.size(m.bytes) : ''}</span><span class="nd-file-actions">`
+        + `<button class="nd-linkbtn" type="button" data-open-upload="${N.esc(id)}" data-name="${N.esc(m.name || 'File')}" data-mime="${N.esc(m.mime || '')}">View</button>`
+        + `<button class="nd-linkbtn" type="button" data-draft-up="${N.esc(id)}" title="Move up 上移" aria-label="Move up 上移"${i === 0 ? ' disabled' : ''}>↑</button>`
+        + `<button class="nd-linkbtn" type="button" data-draft-down="${N.esc(id)}" title="Move down 下移" aria-label="Move down 下移"${i === last ? ' disabled' : ''}>↓</button>`
+        + `<button class="nd-linkbtn" type="button" data-draft-remove="${N.esc(id)}">Remove</button></span></li>`;
     }).join('')}</ul>` : '';
+    // A choice that did not finish: say so, and keep Hand in closed until it is finished or the learner
+    // decides, in so many words, to hand in only the pages that are listed. The names are the learner's own
+    // file names, so they can see which page is missing.
+    const names = S.left.map((x) => x.name).filter(Boolean);
+    const waiting = S.left.length && !S.partialOk ? `<p class="nd-msg error" data-left>${S.left.length} file${S.left.length === 1 ? '' : 's'} you chose ${S.left.length === 1 ? 'is' : 'are'} not in the list yet${names.length ? ' (' + N.esc(names.join(', ')) + ')' : ''}. Choose the same files again to finish, or hand in only the files listed above. 有 ${S.left.length} 个还没有加进来：可以再选同样的文件，也可以只交已经列出的。</p>
+      <div class="nd-actions"><button class="nd-btn quiet" type="button" data-partial-ok${S.files.length ? '' : ' disabled'}>Hand in only the files listed <small>只交列出的</small></button></div>` : '';
+    const chose = S.left.length && S.partialOk ? `<p class="nd-note" data-left-ok>Handing in the ${S.files.length} file${S.files.length === 1 ? '' : 's'} listed above. 只交上面列出的 ${S.files.length} 个。</p>` : '';
     return `<p>Take photos of your exercise pages or save them as a PDF, add them here and press Hand in. You can hand in as often as you like; each hand-in is listed below with its date.</p>
       <label class="nd-field">Which units? 做了哪些单元（可不填）<input type="text" maxlength="200" data-note value="${N.esc(S.note)}" placeholder="e.g. Unit 34, Unit 46"></label>
       ${list}
       <label class="nd-drop"><input type="file" multiple accept="image/*,application/pdf,.pdf,.heic,.heif" data-pick><strong>Choose photos or a PDF</strong><span>Up to ${(S.grammar && S.grammar.maxFiles) || 20} files · 12 MB per file</span></label>
       <div class="nd-progress" hidden><i></i></div>
-      <div class="nd-actions"><button class="nd-btn" type="button" data-hand-in${S.files.length ? '' : ' disabled'}>Hand in <small>交上去</small></button></div>
+      ${waiting}${chose}
+      <div class="nd-actions"><button class="nd-btn" type="button" data-hand-in${canHandIn() ? '' : ' disabled'}>Hand in <small>交上去</small></button></div>
       <p class="nd-msg" data-hand-msg role="status"></p>`;
   }
+
+  // Everything chosen is listed, or the learner has said to hand in only what is listed.
+  const canHandIn = () => Boolean(S.files.length) && !S.busy && (!S.left.length || S.partialOk);
 
   function render(data, listening) {
     const plan = data.plan;
     app.innerHTML = `<p class="nd-kicker">Niu · DSE English</p><h1>Extra Practice</h1>
-      <p class="nd-lead">拓展练习：听力原题节选自由选做；语法书按每周指定的单元做，其余自选，做完在这里交。</p>
+      <p class="nd-lead">拓展听力可自由选做。语法书可按需要选单元练习，做完在这里提交PDF或照片；指定作业以课程页为准。</p>
       <details class="nd-section nd-paper" data-extra-fold="listening"><summary><h2>Listening <small>听力</small></h2><span>${listening.length}</span></summary>
       <p>拓展听力练习，自由选做。</p><div class="nd-cards">${listening.length ? listening.map((t) => N.taskCard({ ...t, paperLabel: 'Listening', part: '' })).join('') : '<p>No listening practice yet.</p>'}</div></details>
       <details class="nd-section nd-paper" data-extra-fold="grammar"><summary><h2>Grammar <small>语法</small></h2><span>${plan.sections.filter((s) => s.ready).length}</span></summary>
         <p>${N.esc(plan.book.title || 'Grammar book')}${plan.book.edition ? ' · ' + N.esc(plan.book.edition) : ''}${plan.book.note ? '<br>' + N.esc(plan.book.note) : ''}</p>
-        <div class="nd-block"><h3 class="nd-sub">This week <small>本周单元</small></h3>${weekHtml(plan)}</div>
+        <div class="nd-block"><h3 class="nd-sub">Assigned units <small>单元安排</small></h3>${weekHtml(plan)}</div>
         <div class="nd-block" data-no-print><h3 class="nd-sub">Hand in your work <small>交作业</small></h3><div data-hand-in-panel>${handInHtml()}</div></div>
         <div class="nd-block"><h3 class="nd-sub">Your hand-ins <small>提交记录</small></h3><div data-records>${recordsHtml(data.records)}</div></div>
         <details class="nd-fold"><summary>The whole book <small>整本书，按章节</small></summary><div class="nd-fold-body"><ul class="nd-list nd-sections">${plan.sections.map((s) => sectionRow(s)).join('')}</ul></div></details>
@@ -106,6 +125,13 @@
 
   const say = (text, kind) => { const m = app.querySelector('[data-hand-msg]'); if (m) { m.textContent = text; m.className = 'nd-msg' + (kind ? ' ' + kind : ''); } };
   const redrawPanel = () => { const panel = app.querySelector('[data-hand-in-panel]'); if (panel) panel.innerHTML = handInHtml(); };
+  const move = (id, by) => {
+    const from = S.files.indexOf(id), to = from + by;
+    if (from < 0 || to < 0 || to >= S.files.length) return;
+    S.files.splice(to, 0, S.files.splice(from, 1)[0]);
+    writeDraft();
+    redrawPanel();
+  };
 
   // Large photos are scaled down before they leave the device (same rule as task uploads).
   async function prepare(file) {
@@ -140,13 +166,20 @@
       return !known || S.files.indexOf(known) < 0;
     }).length;
     if (S.files.length + adding > max) { say(`Choose no more than ${max} files in one hand-in.`, 'error'); input.value = ''; return; }
+    // This choice is being tried now, so it is no longer a decision to hand in without it: anything still
+    // missing at the end of it is written down again below. What is missing is named by its file name, the
+    // only name of it the learner has: a page taken again at a smaller size comes back under that name and
+    // settles it, where the exact file chosen before never could.
+    const chosen = files.map((f) => f.name);
+    const keptLeft = S.left.filter((x) => chosen.indexOf(x.name) < 0);
+    S.partialOk = false;
     S.busy = true; input.disabled = true;
     const bar = app.querySelector('[data-hand-in-panel] .nd-progress'), fill = bar.querySelector('i');
     bar.hidden = false; fill.style.width = '5%';
     // Each page's upload ID is released only when the whole selection has gone through: a page that
     // arrived must keep its ID while a later page of the same selection is still failing, or the next
     // press would ask for a second copy of a page that is already saved.
-    const done = [];
+    const done = [], doneNames = [];
     try {
       for (let i = 0; i < files.length; i += 1) {
         say(`Sending ${i + 1} of ${files.length}… Keep this page open. 正在上传，请不要关闭页面。`);
@@ -170,18 +203,24 @@
         const result = await A.post('uploadFile', { taskId: 'grammar', itemId: 'work', fileId, type: ready.type, name: ready.name, kind: 'uploaded', seconds: 0, data, submissionOrigin });
         // A retried page comes back as the same file; it is listed once.
         if (S.files.indexOf(fileId) < 0) S.files.push(fileId);
-        S.meta[fileId] = { name: result.name || ready.name, bytes: result.bytes || ready.blob.size };
+        S.meta[fileId] = { name: result.name || ready.name, bytes: result.bytes || ready.blob.size, mime: ready.type };
         writeDraft();
         done.push(slot);
+        doneNames.push(files[i].name);
         fill.style.width = Math.round(((i + 1) / files.length) * 100) + '%';
       }
       // Every page of this selection is listed and saved in the draft, so the IDs have done their work.
       done.forEach((slot) => { delete S.pending[slot]; prepared.delete(slot); });
+      S.left = keptLeft;
       writeDraft();
       S.busy = false;
       redrawPanel();
       say(`Uploaded ${files.length} file${files.length === 1 ? '' : 's'}. Check the list, then press Hand in. 已上传，核对后点 Hand in。`, 'success');
     } catch (error) {
+      // What this choice did not finish, written down where a reload will still find it. Hand in stays
+      // closed until these pages are listed too, or the learner says to hand in without them.
+      S.left = keptLeft.concat(chosen.filter((name) => doneNames.indexOf(name) < 0).map((name) => ({ name: name })));
+      writeDraft();
       S.busy = false;
       redrawPanel();
       say(((error && error.message) || 'The upload did not finish.')
@@ -190,7 +229,7 @@
   }
 
   async function handIn(button) {
-    if (S.busy || !S.files.length) return;
+    if (!canHandIn()) return;
     S.busy = true; button.disabled = true;
     say('Handing in… 正在提交。');
     try {
@@ -238,6 +277,19 @@
     if (event.target.closest('[data-viewer-close]')) { const v = app.querySelector('[data-viewer]'); v.hidden = true; v.innerHTML = ''; return; }
     const remove = event.target.closest('[data-draft-remove]');
     if (remove) { S.files = S.files.filter((id) => id !== remove.dataset.draftRemove); writeDraft(); redrawPanel(); return; }
+    // The order in the list is the order handed in, and it is kept in the draft, so reopening the page
+    // keeps it too.
+    const up = event.target.closest('[data-draft-up]');
+    if (up) { move(up.dataset.draftUp, -1); return; }
+    const down = event.target.closest('[data-draft-down]');
+    if (down) { move(down.dataset.draftDown, 1); return; }
+    const partial = event.target.closest('[data-partial-ok]');
+    if (partial) {
+      if (!S.files.length || !window.confirm(`Hand in only the ${S.files.length} file${S.files.length === 1 ? '' : 's'} listed? 只交已经列出的 ${S.files.length} 个？`)) return;
+      S.partialOk = true; writeDraft(); redrawPanel();
+      say('Press Hand in to send the files listed above. 点 Hand in 交上面列出的。');
+      return;
+    }
     const button = event.target.closest('[data-hand-in]');
     if (button) handIn(button);
   });

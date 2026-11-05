@@ -11,7 +11,8 @@
   .nd-search, .nd-check, .nd-word .tools, .nd-method, .nd-submission-method,
   .nd-kicker, .nd-banner, .nd-count, .nd-msg, .nd-audio, .nd-speak-panel,
   [data-method], [data-paper-upload], [data-no-print], .no-print,
-  button, input[type="file"], audio, video, .nd-print-control { display: none !important; }
+  button, input[type="file"], audio, video, .nd-print-control,
+  .nd-go, #homework .nd-pill { display: none !important; }
   .nd-page h1 { font-size: 14pt !important; line-height: 1.15 !important; margin: 0 0 4pt !important; }
   h2, h3, h4, summary, legend, .nd-prompt-line { break-after: avoid; }
   .nd-page h2, .nd-rich h3 { font-size: 11.5pt !important; margin: 6pt 0 3pt !important; }
