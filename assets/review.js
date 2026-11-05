@@ -135,6 +135,30 @@
     return t.blocks.map((b, i) => (i >= start && (firstQ < 0 || i < firstQ) && titled(b) ? i : -1)).filter((i) => i >= 0);
   }
 
+  // A table in the material can carry the place an answer belongs: an empty <div data-answer-slot="q3aa">
+  // in that question's own cell. Where the page has drawn one, the answer already drawn for that question is
+  // moved into it, so it is read in the row it was written for instead of under an empty table. The element
+  // itself is moved, so nothing is copied, reworded or dropped: an answer whose slot is not on the page stays
+  // where it was, and a slot whose answer is not on the page stays empty. Only the pane passed in is
+  // searched, so a slot printed in the texts pane never takes an answer out of the questions pane.
+  function mountAnswerSlots(pane) {
+    if (!pane) return;
+    const slots = new Map();
+    pane.querySelectorAll('[data-answer-slot]').forEach((slot) => {
+      const id = slot.getAttribute('data-answer-slot');
+      if (id && !slots.has(id)) slots.set(id, slot);
+    });
+    if (!slots.size) return;
+    pane.querySelectorAll('.nr-item[data-q]').forEach((item) => {
+      const id = item.getAttribute('data-q');
+      if (!slots.has(id)) return;
+      const slot = slots.get(id);
+      slots.delete(id); // one answer to a slot, and a slot filled once
+      if (item.contains(slot) || slot.contains(item)) return; // already there, or the slot is inside the answer
+      slot.appendChild(item);
+    });
+  }
+
   function render(view, options) {
     const t = view.task, byId = {};
     (view.items || []).forEach((i) => { byId[i.id] = i; });
@@ -181,6 +205,8 @@
         ? `<div class="nd-split"><section class="nd-split-pane nd-split-texts" aria-label="Texts 文章">${texts.map((i) => materialHtml(Object.assign({}, t.blocks[i], { open: true }))).join('')}</section><div class="nd-split-pane nd-split-questions">${work}</div></div>`
         : view.waiting ? '' : `<div class="nr-body">${work}</div>`}`;
     document.body.classList.toggle('nd-split-page', texts.length > 0 && !view.waiting);
+    // The questions pane of what has just been drawn, and never the texts beside it.
+    mountAnswerSlots(app.querySelector('.nd-split-questions') || app.querySelector('.nr-body'));
     if (typeof window.NiuReviewStrip === 'function') window.NiuReviewStrip(view);
   }
 
@@ -248,7 +274,7 @@
     return new Promise((resolve) => {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = `${N.root}assets/review.css?v=niu-review-1`;
+      link.href = `${N.root}assets/review.css?v=niu-review-slots-20261105`;
       link.addEventListener('load', resolve, { once: true });
       link.addEventListener('error', resolve, { once: true });
       document.head.appendChild(link);

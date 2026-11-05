@@ -50,6 +50,13 @@
 .nr-pages img { display: block; width: 100%; max-width: 860px; margin: 0 auto 10px; }
 
 
+/* An answer read in its own cell of one of the material's tables (data-answer-slot). The cell decides how
+   wide it is, so the answer keeps no reading width and no gap of its own and wraps inside the column. These
+   two rules reach an answer only once it is in a cell; its marks, its colours and the rest of the page are
+   exactly as above. */
+[data-answer-slot] > .nr-item { margin: 0; max-width: none; min-width: 0; overflow-wrap: break-word; }
+[data-answer-slot] > .nr-item > :last-child { margin-bottom: 0; }
+
 /* The checked page has flat reading panes; the source forum keeps its genuine table borders. */
 .nd-split-pane { border: 0; border-radius: 0; box-shadow: none; background: transparent; }
 
@@ -77,6 +84,8 @@
   .nr-unclear { color: #555 !important; }
   .nr-doc > summary { padding: 0; }
   .nr-body, .nr-item { max-width: none; }
+  /* On paper an answer in a cell keeps the cell's own spacing, as it does on the screen. */
+  [data-answer-slot] > .nr-item { margin: 0 !important; }
   /* The toolbar holds the print button and the hand-in time; the paper keeps the title, the mark and the
      work. The shared print rules already hide the toolbar, so the mark sits outside it. */
   .nd-taskbar { display: none !important; }
