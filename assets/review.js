@@ -179,7 +179,7 @@
     const work = waitingAll ? '' : `<div data-blocks>${L.blocksHtml(t, texts, c)}</div>`;
     const banner = waitingAll
       ? `<p class="nd-banner warn">${waitingAll === 'not-released'
-        ? 'Your teacher has not released the feedback for this hand-in yet. 这次作业的批改还没有发布。'
+        ? 'Submitted. Waiting for your teacher to review. 已提交，等待老师批改。'
         : 'Your teacher is still checking this hand-in. 老师还在批改这次作业。'}</p>`
       : '';
     // The mark sits in the page itself, not in the toolbar: the toolbar is left off a printed copy, and the

@@ -206,7 +206,7 @@
     const top = app.querySelector('[data-top]');
     if (S.submission) {
       const r = S.submission.result || {};
-      let html = `<p class="nd-banner" data-print-feedback>Submitted · ${N.esc(N.when(S.submission.submittedAt))}<small>${r.released ? (r.pending ? 'Part of this task is still waiting for your teacher. 部分题目还在等老师批改。' : 'Your feedback is below. 批改结果见下方。') : 'Your teacher will check this. 已提交，等待老师批改。'}</small></p>`;
+      let html = `<p class="nd-banner" data-print-feedback>Submitted · ${N.esc(N.when(S.submission.submittedAt))}<small>${r.released ? (r.pending ? 'Part of this task is still waiting for your teacher. 部分题目还在等老师批改。' : 'Your feedback is below. 批改结果见下方。') : 'Waiting for your teacher to review. 已提交，等待老师批改。'}</small></p>`;
       if (r.released && (r.outOf !== '' || r.overall)) {
         html += `<div class="nd-result"><h2>Feedback 批改结果</h2>${r.outOf !== '' ? `<p class="nd-score">${N.esc(r.score)} / ${N.esc(r.outOf)}</p>` : ''}${r.overall ? `<p class="nd-pre">${N.esc(r.overall)}</p>` : ''}</div>`;
       }
