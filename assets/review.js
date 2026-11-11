@@ -340,6 +340,8 @@
       await A.ready;
       if (!submissionId) throw new Error('This page needs the hand-in it belongs to.');
       const view = await A.request('getReviewedDisplay', { submissionId });
+      // Teacher preview only: a learner hand-in opens on the Teacher page's Student review.
+      if (view.teacherReview) { location.replace(view.teacherReview); return; }
       N.previewNote(view.env || '');
       await mount(view);
     } catch (error) { N.fail(app, error); }
