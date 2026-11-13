@@ -34,6 +34,12 @@
     skipped: ['', '', '']
   };
 
+  // An answer whose meaning is right and only its grammar or spelling is not (teacher rule, 2026-11-13: 按DSE不给分，
+  // 但是批改痕迹要不同颜色，和真正错误区分开). The verdict and the score stay as marked; the crossing-out and the
+  // cross take a colour of their own, and a short word says the same for a page read or printed without colour.
+  const FORMS = { grammar: ['语法', 'Grammar 语法'], spelling: ['拼写', 'Spelling 拼写'] };
+  const formOf = (item) => (item && Object.prototype.hasOwnProperty.call(FORMS, item.form) && ['wrong', 'partial'].indexOf(item.verdict) >= 0 ? item.form : '');
+
   // Writing and speaking: the crossing-out stays quiet and the correction is the red word. Short answers: the
   // answer marked in pale red with the right answer in pale green brackets beside it.
   const styleOf = (q) => (q && ['mc', 'gap', 'short'].indexOf(q.kind) >= 0 ? 'short' : 'writing');
@@ -87,7 +93,10 @@
     const scored = typeof item.score === 'number';
     const figure = scored && (item.worth > 1 || item.verdict === 'partial' || item.verdict === 'evaluated' || !item.worth)
       ? ` ${item.score}${item.worth ? '/' + item.worth : ''}` : '';
-    return `<span class="nr-mark ${v[2]}" title="${N.esc(v[1])}"><span aria-hidden="true">${v[0]}</span><span class="nr-mark-words">${N.esc(v[1])}</span>${figure}</span>`;
+    const form = item.waiting ? '' : formOf(item);
+    const title = form ? `${v[1]} · ${FORMS[form][1]}` : v[1];
+    const tag = form ? `<span class="nr-form-tag" title="${N.esc(FORMS[form][1])}">${FORMS[form][0]}</span>` : '';
+    return `<span class="nr-mark ${form ? 'form' : v[2]}" title="${N.esc(title)}"><span aria-hidden="true">${v[0]}</span><span class="nr-mark-words">${N.esc(v[1])}</span>${figure}${tag}</span>`;
   }
 
   function filesHtml(item) {
@@ -113,7 +122,7 @@
     };
     const field = (q, writing) => {
       const it = item(q), inner = answerInner(it, q);
-      return `<div class="nr-field${writing ? ' nr-field-w' : ''}${inner ? '' : ' nr-empty'}">${inner || '&nbsp;'}</div><p class="nr-verdict">${markHtml(it)}</p>`;
+      return `<div class="nr-field${writing ? ' nr-field-w' : ''}${inner ? '' : ' nr-empty'}${formOf(it) ? ' nr-form' : ''}">${inner || '&nbsp;'}</div><p class="nr-verdict">${markHtml(it)}</p>`;
     };
     return {
       option: (q, letter, option) => {
@@ -132,7 +141,7 @@
       },
       inline: (q) => {
         const it = item(q), inner = answerInner(it, q);
-        return `<span class="nr-fill${inner ? '' : ' nr-empty'}">${inner || '&nbsp;'}</span> ${markHtml(it)}`;
+        return `<span class="nr-fill${inner ? '' : ' nr-empty'}${formOf(it) ? ' nr-form' : ''}">${inner || '&nbsp;'}</span> ${markHtml(it)}`;
       },
       box: (q) => field(q, false),
       long: (q) => field(q, true),
@@ -319,7 +328,7 @@
     return new Promise((resolve) => {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = `${N.root}assets/review.css?v=niu-checked-layout-20261110`;
+      link.href = `${N.root}assets/review.css?v=niu-form-errors-20261113`;
       link.addEventListener('load', resolve, { once: true });
       link.addEventListener('error', resolve, { once: true });
       document.head.appendChild(link);

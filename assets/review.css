@@ -45,6 +45,12 @@
 .nr-mark.warn { color: var(--warn); }
 .nr-mark.info { color: var(--accent); }
 .nr-mark-words { font-size: 13px; font-weight: 650; }
+/* Wrong only in grammar or spelling (2026-11-13): no mark, as in the DSE, but violet instead of red, with a short
+   word beside the cross so it reads the same without colour. The right answer stays in green brackets. */
+:root { --form: #6b3fa0; --form-soft: #f1eafa; }
+.nr-form .nr-del { background: var(--form-soft); color: var(--form); text-decoration-color: var(--form); }
+.nr-mark.form { color: var(--form); }
+.nr-form-tag { align-self: center; padding: 0 5px; border: 1px solid currentColor; border-radius: 4px; font-size: 12px; font-weight: 700; line-height: 1.4; }
 .nd-gap-line .nr-mark-words, .nr-checked fieldset .nr-mark-words { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* The mark for the whole piece: one line of figures, in the page and on the paper. */
@@ -83,6 +89,8 @@
   .nr-mark { color: #111 !important; }
   .nr-mark.bad { color: #9a2f2f !important; }
   .nr-mark.good { color: #1f6b43 !important; }
+  .nr-form .nr-del { color: #5b2a86 !important; }
+  .nr-mark.form, .nr-form-tag { color: #5b2a86 !important; }
   .nr-script-body { max-height: none !important; overflow: visible !important; }
   .nr-line.nr-now { background: none !important; }
   .nd-taskbar { display: none !important; }
