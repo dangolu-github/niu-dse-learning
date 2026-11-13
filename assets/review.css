@@ -45,8 +45,7 @@
 .nr-mark.warn { color: var(--warn); }
 .nr-mark.info { color: var(--accent); }
 .nr-mark-words { font-size: 13px; font-weight: 650; }
-/* Wrong only in grammar or spelling (2026-11-13): no mark, as in the DSE, but violet instead of red, with a short
-   word beside the cross so it reads the same without colour. The right answer stays in green brackets. */
+/* Grammar or spelling mistakes. */
 :root { --form: #6b3fa0; --form-soft: #f1eafa; }
 .nr-form .nr-del { background: var(--form-soft); color: var(--form); text-decoration-color: var(--form); }
 .nr-mark.form { color: var(--form); }

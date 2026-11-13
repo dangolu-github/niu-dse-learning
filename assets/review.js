@@ -34,9 +34,7 @@
     skipped: ['', '', '']
   };
 
-  // An answer whose meaning is right and only its grammar or spelling is not (teacher rule, 2026-11-13: 按DSE不给分，
-  // 但是批改痕迹要不同颜色，和真正错误区分开). The verdict and the score stay as marked; the crossing-out and the
-  // cross take a colour of their own, and a short word says the same for a page read or printed without colour.
+  // Grammar or spelling mistakes: their own class and a short word beside the cross.
   const FORMS = { grammar: ['语法', 'Grammar 语法'], spelling: ['拼写', 'Spelling 拼写'] };
   const formOf = (item) => (item && Object.prototype.hasOwnProperty.call(FORMS, item.form) && ['wrong', 'partial'].indexOf(item.verdict) >= 0 ? item.form : '');
 
